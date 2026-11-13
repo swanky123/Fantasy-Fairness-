@@ -204,6 +204,10 @@ function joinLeague(id) {
 function createLeague() {
 
   const name = document.getElementById("newLeagueName").value.trim();
+  const teams = document.getElementById("newLeagueTeams").value;
+  const scoring = document.getElementById("newLeagueScoring").value;
+  const draft = document.getElementById("draftType").value;
+  const access = document.getElementById("leagueAccess").value;
 
   if (!name) {
     alert("Please enter a league name.");
@@ -211,9 +215,15 @@ function createLeague() {
   }
 
   leagues.push({
+    id: Date.now(),
+    code: "FF-" + Date.now().toString().slice(-6),
     name: name,
-    teams: Number(document.getElementById("newLeagueTeams").value),
-    scoring: document.getElementById("newLeagueScoring").value
+    teams: teams,
+    scoring: scoring,
+    draft: draft,
+    access: access,
+    members: 0,
+    joined: false
   });
 
   saveLeagues();
@@ -221,7 +231,7 @@ function createLeague() {
 
   document.getElementById("newLeagueName").value = "";
 
-  alert("Your league was created!");
+  alert("Your league was created successfully!");
 }
 function renderPlayers(){let q=(document.getElementById('playerSearch').value||'').toLowerCase();let drafted=picks.map(p=>p.player);document.getElementById('players').innerHTML=pool.filter(p=>!drafted.includes(p[0])&&p.join(' ').toLowerCase().includes(q)).map(p=>`<div class="player"><div><b>${p[0]}</b><div class="small">${p[1]} · ${p[2]}</div></div><button class="btn secondary" onclick="makePick('${p[0].replace(/'/g,"\\'")}')">Draft</button></div>`).join('')||'<div class="empty">No available players match.</div>'}
 function makePick(name){if(picks.length>=144)return alert('Demo draft is complete.');if(picks.some(p=>p.player===name))return;let ti=snakeTeam(picks.length),round=Math.floor(picks.length/12)+1,overall=picks.length+1;let t=teams[ti];t.roster.push(name);picks.push({team:ti,player:name,round,overall});audit.push(`Pick ${overall}: ${t.name} drafted ${name}`);activity.push(`Draft: ${t.name} selected ${name} (#${overall})`);renderDraft();renderDashboard();renderTeams()}
