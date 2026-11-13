@@ -143,26 +143,62 @@ function escapeLeagueText(value) {
   div.textContent = value;
   return div.innerHTML;
 }
-
 function renderLeagues() {
   const directory = document.getElementById("leagueDirectory");
 
   directory.innerHTML = leagues.length
-    ? leagues.map(league => `
-        <div class="card" style="margin:10px 0">
-          <h3>${escapeLeagueText(league.name)}</h3>
-          <p>
-            ${league.teams} teams · ${escapeLeagueText(league.scoring)}
-          </p>
-          <p>
-            Draft: ${escapeLeagueText(league.draft || "Snake")}
-          </p>
-          <span class="pill good">
-            ${escapeLeagueText(league.access || "Public")}
-          </span>
-        </div>
-      `).join("")
+    ? leagues.map(league => {
+        const members = Number(league.members || 0);
+        const full = members >= Number(league.teams);
+
+        let joinButton = "";
+
+        if (league.joined) {
+          joinButton = '<button class="btn secondary" disabled>Joined</button>';
+        } else if (full) {
+          joinButton = '<button class="btn secondary" disabled>League Full</button>';
+        } else {
+          joinButton = `<button class="btn" onclick="joinLeague(${league.id})">Join League</button>`;
+        }
+
+        return `
+          <div class="card" style="margin:10px 0">
+            <h3>${escapeLeagueText(league.name)}</h3>
+            <p>${league.teams} teams · ${escapeLeagueText(league.scoring)}</p>
+            <p>Draft: ${escapeLeagueText(league.draft || "Snake")}</p>
+            <p>Members: ${members}/${league.teams}</p>
+            <span class="pill good">${escapeLeagueText(league.access || "Public")}</span>
+            <div style="margin-top:12px">${joinButton}</div>
+          </div>
+        `;
+      }).join("")
     : "No leagues created yet.";
+}
+
+function joinLeague(id) {
+  const league = leagues.find(league => league.id === id);
+
+  if (!league) return;
+
+  if (league.joined) {
+    alert("You have already joined this league.");
+    return;
+  }
+
+  const members = Number(league.members || 0);
+
+  if (members >= Number(league.teams)) {
+    alert("This league is full.");
+    return;
+  }
+
+  league.members = members + 1;
+  league.joined = true;
+
+  saveLeagues();
+  renderLeagues();
+
+  alert("You successfully joined the league!");
 }
 
 function createLeague() {
