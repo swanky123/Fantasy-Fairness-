@@ -82,32 +82,7 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
 
       <button class="btn" onclick="createLeague()">
     function createLeague() {
-  const name = document.getElementById("leagueName").value.trim();
-  const teams = document.getElementById("teamCount").value;
-  const draftType = document.getElementById("draftType").value;
-  const access = document.getElementById("leagueAccess").value;
-
-  if (!name) {
-    alert("Please enter a league name.");
-    return;
-  }
-
-  leagues.push({
-    id: Date.now(),
-    name: name,
-    teams: teams,
-    scoring: "Full PPR",
-    draft: draftType,
-    access: access
-  });
-
-  saveLeagues();
-  renderLeagues();
-
-  document.getElementById("leagueName").value = "";
-  alert("League created successfully!");
-}
-  const name = document.getElementById("leagueName").value.trim();
+const name = document.getElementById("leagueName").value.trim();
   const teams = document.getElementById("teamCount").value;
   const draftType = document.getElementById("draftType").value;
   const access = document.getElementById("leagueAccess").value;
