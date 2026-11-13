@@ -41,6 +41,66 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
   <div class="grid">
     <div class="card span5">
       <h3>Create a league</h3>
+
+      <div class="field">
+        <label>League name</label>
+        <input id="newLeagueName" placeholder="Enter league name">
+      </div>
+
+      <div class="field">
+        <label>Number of teams</label>
+        <select id="newLeagueTeams">
+          <option value="12">12 teams</option>
+          <option value="10">10 teams</option>
+          <option value="8">8 teams</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Scoring</label>
+        <select id="newLeagueScoring">
+          <option>Full PPR</option>
+          <option>Half PPR</option>
+          <option>Standard</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Draft Type</label>
+        <select id="draftType">
+          <option value="Snake">Snake Draft</option>
+          <option value="Linear">Linear Draft</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>League Access</label>
+        <select id="leagueAccess">
+          <option value="Public">Public</option>
+          <option value="Private">Private</option>
+        </select>
+      </div>
+
+      <button class="btn" onclick="createLeague()">Create League</button>
+    </div>
+
+    <div class="card span7">
+      <h3>League directory</h3>
+      <div id="leagueDirectory">No leagues created yet.</div>
+    </div>
+  </div>
+</section>
+  <div class="hero">
+    <div>
+      <div class="eyebrow">League management</div>
+      <h1>Public leagues</h1>
+      <div class="muted">Create or join a fantasy league.</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card span5">
+      <h3>Create a league</h3>
     <div class="field">
   <label for="draftType">Draft Type</label>
   <select id="draftType">
@@ -153,7 +213,8 @@ document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>switchTab(b.dataset.t
 function snakeTeam(p){let round=Math.floor(p/12),slot=p%12;return round%2===0?slot:11-slot}
 function renderDashboard(){document.getElementById('standings').innerHTML=teams.map((t,i)=>`<tr><td>${i+1}</td><td>${t.name}</td><td>0-0</td><td>—</td></tr>`).join('');document.getElementById('checklist').innerHTML=['Rules approved by all owners','Commissioner actions logged','Trade review process published','Waiver and tie-break rules set','NFL data provider connected'].map((x,i)=>`<div class="row" style="padding:7px 0"><span>${x}</span><span class="pill ${i<3?'good':'warn'}">${i<3?'Ready':'Pending'}</span></div>`).join('');document.getElementById('activity').innerHTML=activity.length?activity.slice().reverse().map(x=>`<div style="padding:5px 0">${x}</div>`).join(''):'No activity yet. Draft picks, reports, and trade submissions will appear here.'}
 let activity=[];
-  let leagues = JSON.parse(
+
+let leagues = JSON.parse(
   localStorage.getItem("fantasyFairnessLeagues") || "[]"
 );
 
@@ -164,6 +225,12 @@ function saveLeagues() {
   );
 }
 
+function escapeLeagueText(value) {
+  const div = document.createElement("div");
+  div.textContent = value;
+  return div.innerHTML;
+}
+
 function renderLeagues() {
   const directory = document.getElementById("leagueDirectory");
 
@@ -171,20 +238,48 @@ function renderLeagues() {
     ? leagues.map(league => `
         <div class="card" style="margin:10px 0">
           <h3>${escapeLeagueText(league.name)}</h3>
-          <p>${league.teams} teams · ${league.scoring}</p>
-          <span class="pill good">Public league</span>
+          <p>
+            ${league.teams} teams · ${escapeLeagueText(league.scoring)}
+          </p>
+          <p>
+            Draft: ${escapeLeagueText(league.draft || "Snake")}
+          </p>
+          <span class="pill good">
+            ${escapeLeagueText(league.access || "Public")}
+          </span>
         </div>
       `).join("")
     : "No leagues created yet.";
 }
 
-function escapeLeagueText(value) {
-  const div = document.createElement("div");
-  div.textContent = value;
-  return div.innerHTML;
-}
-
 function createLeague() {
+  const name = document.getElementById("newLeagueName").value.trim();
+  const teams = document.getElementById("newLeagueTeams").value;
+  const scoring = document.getElementById("newLeagueScoring").value;
+  const draft = document.getElementById("draftType").value;
+  const access = document.getElementById("leagueAccess").value;
+
+  if (!name) {
+    alert("Please enter a league name.");
+    return;
+  }
+
+  leagues.push({
+    id: Date.now(),
+    name: name,
+    teams: teams,
+    scoring: scoring,
+    draft: draft,
+    access: access
+  });
+
+  saveLeagues();
+  renderLeagues();
+
+  document.getElementById("newLeagueName").value = "";
+
+  alert("Your league was created successfully!");
+}
   const name = document.getElementById("newLeagueName").value.trim();
 
   if (!name) {
