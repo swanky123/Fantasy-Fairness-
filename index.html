@@ -164,6 +164,7 @@ function renderLeagues() {
         return `
           <div class="card" style="margin:10px 0">
             <h3>${escapeLeagueText(league.name)}</h3>
+            <p>League ID: ${escapeLeagueText(league.code || "Pending")}</p>
             <p>${league.teams} teams · ${escapeLeagueText(league.scoring)}</p>
             <p>Draft: ${escapeLeagueText(league.draft || "Snake")}</p>
             <p>Members: ${members}/${league.teams}</p>
