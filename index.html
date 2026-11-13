@@ -16,7 +16,7 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
 <body>
 <header><div><div class="brand">FANTASY <span>FAIRNESS</span></div><div class="tag">A better league starts with fair rules.</div></div>
 <nav>
-<button class="nav active" data-tab="dashboard">Dashboard</button><button class="nav" data-tab="draft">Draft Room</button><button class="nav" data-tab="teams">Teams</button><button class="nav" data-tab="trades">Trade Review</button><button class="nav" data-tab="integrity">Integrity</button><button class="nav" data-tab="settings">Settings</button>
+<button class="nav active" data-tab="dashboard">Dashboard</button><button class="nav" data-tab="leagues">Leagues</button><button class="nav" data-tab="draft">Draft Room</button><button class="nav" data-tab="teams">Teams</button><button class="nav" data-tab="trades">Trade Review</button><button class="nav" data-tab="integrity">Integrity</button><button class="nav" data-tab="settings">Settings</button>
 </nav></header>
 <main>
 <section id="dashboard" class="section active">
@@ -29,7 +29,55 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
 <div class="card span7"><h3>League standings</h3><table><thead><tr><th>Rank</th><th>Team</th><th>W-L</th><th>Points</th></tr></thead><tbody id="standings"></tbody></table><div class="small">Sample preseason standings — live standings begin when a season data feed is connected.</div></div>
 <div class="card span5"><h3>Fairness checklist</h3><div id="checklist"></div></div>
 <div class="card span12"><h3>League activity</h3><div id="activity" class="small"></div></div>
-</div></section>
+</div></section><section id="leagues" class="section">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">League management</div>
+      <h1>Public leagues</h1>
+      <div class="muted">Create or join a fantasy league.</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card span5">
+      <h3>Create a league</h3>
+
+      <div class="field">
+        <label>League name</label>
+        <input id="newLeagueName" placeholder="Enter league name">
+      </div>
+
+      <div class="field">
+        <label>Number of teams</label>
+        <select id="newLeagueTeams">
+          <option value="12">12 teams</option>
+          <option value="10">10 teams</option>
+          <option value="8">8 teams</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Scoring</label>
+        <select id="newLeagueScoring">
+          <option>Full PPR</option>
+          <option>Half PPR</option>
+          <option>Standard</option>
+        </select>
+      </div>
+
+      <button class="btn" onclick="createLeague()">
+        Create league
+      </button>
+    </div>
+
+    <div class="card span7">
+      <h3>Public league directory</h3>
+      <div id="leagueDirectory">
+        No leagues created yet.
+      </div>
+    </div>
+  </div>
+</section>
 <section id="draft" class="section">
 <div class="hero"><div><div class="eyebrow">Draft room</div><h1>Build your roster</h1><div class="muted">Demo draft board · 12 teams · snake order</div></div><span class="pill warn" id="pickStatus">Pick 1 of 144</span></div>
 <div class="grid">
@@ -65,6 +113,58 @@ document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>switchTab(b.dataset.t
 function snakeTeam(p){let round=Math.floor(p/12),slot=p%12;return round%2===0?slot:11-slot}
 function renderDashboard(){document.getElementById('standings').innerHTML=teams.map((t,i)=>`<tr><td>${i+1}</td><td>${t.name}</td><td>0-0</td><td>—</td></tr>`).join('');document.getElementById('checklist').innerHTML=['Rules approved by all owners','Commissioner actions logged','Trade review process published','Waiver and tie-break rules set','NFL data provider connected'].map((x,i)=>`<div class="row" style="padding:7px 0"><span>${x}</span><span class="pill ${i<3?'good':'warn'}">${i<3?'Ready':'Pending'}</span></div>`).join('');document.getElementById('activity').innerHTML=activity.length?activity.slice().reverse().map(x=>`<div style="padding:5px 0">${x}</div>`).join(''):'No activity yet. Draft picks, reports, and trade submissions will appear here.'}
 let activity=[];
+  let leagues = JSON.parse(
+  localStorage.getItem("fantasyFairnessLeagues") || "[]"
+);
+
+function saveLeagues() {
+  localStorage.setItem(
+    "fantasyFairnessLeagues",
+    JSON.stringify(leagues)
+  );
+}
+
+function renderLeagues() {
+  const directory = document.getElementById("leagueDirectory");
+
+  directory.innerHTML = leagues.length
+    ? leagues.map(league => `
+        <div class="card" style="margin:10px 0">
+          <h3>${escapeLeagueText(league.name)}</h3>
+          <p>${league.teams} teams · ${league.scoring}</p>
+          <span class="pill good">Public league</span>
+        </div>
+      `).join("")
+    : "No leagues created yet.";
+}
+
+function escapeLeagueText(value) {
+  const div = document.createElement("div");
+  div.textContent = value;
+  return div.innerHTML;
+}
+
+function createLeague() {
+  const name = document.getElementById("newLeagueName").value.trim();
+
+  if (!name) {
+    alert("Please enter a league name.");
+    return;
+  }
+
+  leagues.push({
+    name: name,
+    teams: Number(document.getElementById("newLeagueTeams").value),
+    scoring: document.getElementById("newLeagueScoring").value
+  });
+
+  saveLeagues();
+  renderLeagues();
+
+  document.getElementById("newLeagueName").value = "";
+
+  alert("Your league was created!");
+}
 function renderPlayers(){let q=(document.getElementById('playerSearch').value||'').toLowerCase();let drafted=picks.map(p=>p.player);document.getElementById('players').innerHTML=pool.filter(p=>!drafted.includes(p[0])&&p.join(' ').toLowerCase().includes(q)).map(p=>`<div class="player"><div><b>${p[0]}</b><div class="small">${p[1]} · ${p[2]}</div></div><button class="btn secondary" onclick="makePick('${p[0].replace(/'/g,"\\'")}')">Draft</button></div>`).join('')||'<div class="empty">No available players match.</div>'}
 function makePick(name){if(picks.length>=144)return alert('Demo draft is complete.');if(picks.some(p=>p.player===name))return;let ti=snakeTeam(picks.length),round=Math.floor(picks.length/12)+1,overall=picks.length+1;let t=teams[ti];t.roster.push(name);picks.push({team:ti,player:name,round,overall});audit.push(`Pick ${overall}: ${t.name} drafted ${name}`);activity.push(`Draft: ${t.name} selected ${name} (#${overall})`);renderDraft();renderDashboard();renderTeams()}
 function undoPick(){let p=picks.pop();if(!p)return;teams[p.team].roster=teams[p.team].roster.filter(x=>x!==p.player);audit.push(`Commissioner undid pick ${p.overall} (${p.player})`);renderDraft();renderDashboard();renderTeams()}
@@ -78,6 +178,6 @@ function fileReport(){let type=document.getElementById('reportType').value,who=d
 function renderReports(){document.getElementById('reports').innerHTML=reports.length?reports.map((r,i)=>`<div class="card" style="margin-bottom:10px"><div class="row"><b>${r.type}</b><span class="pill warn">${r.status}</span></div><div class="small">${r.who||'Teams not specified'}</div><p>${r.details}</p><div class="actions"><button class="btn secondary" onclick="resolveReport(${i})">Mark reviewed</button></div></div>`).join(''):'No reports filed. Reports are allegations, not findings.'}
 function resolveReport(i){reports[i].status='Reviewed — decision must be documented by league officers';audit.push(`Report ${i+1} marked reviewed; rationale still required`);renderReports();renderAudit()}
 function renderAudit(){document.getElementById('audit').innerHTML=audit.length?audit.slice().reverse().map((x,i)=>`<div style="padding:5px 0;border-bottom:1px solid var(--line)">${x}</div>`).join(''):'No administrative actions yet.'}
-renderDashboard();renderDraft();renderTeams();initTradeTeams();
+renderDashboard();renderDraft();renderTeams();initTradeTeams();renderLeagues();
 </script>
 </body></html>
