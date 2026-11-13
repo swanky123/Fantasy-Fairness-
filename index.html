@@ -90,94 +90,7 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
     </div>
   </div>
 </section>
-  <div class="hero">
-    <div>
-      <div class="eyebrow">League management</div>
-      <h1>Public leagues</h1>
-      <div class="muted">Create or join a fantasy league.</div>
-    </div>
-  </div>
-
-  <div class="grid">
-    <div class="card span5">
-      <h3>Create a league</h3>
-    <div class="field">
-  <label for="draftType">Draft Type</label>
-  <select id="draftType">
-    <option value="Snake" selected>Snake Draft</option>
-    <option value="Linear">Linear Draft</option>
-  </select>
-</div>
-
-<div class="field">
-  <label for="leagueAccess">League Access</label>
-  <select id="leagueAccess">
-    <option value="Public" selected>Public</option>
-    <option value="Private">Private</option>
-  </select>
-</div>
-
-      <div class="field">
-        <label>League name</label>
-        <input id="newLeagueName" placeholder="Enter league name">
-      </div>
-
-      <div class="field">
-        <label>Number of teams</label>
-        <select id="newLeagueTeams">
-          <option value="12">12 teams</option>
-          <option value="10">10 teams</option>
-          <option value="8">8 teams</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Scoring</label>
-        <select id="newLeagueScoring">
-          <option>Full PPR</option>
-          <option>Half PPR</option>
-          <option>Standard</option>
-        </select>
-      </div>
-
-      <button class="btn" onclick="createLeague()">
-    function createLeague() {
-const name = document.getElementById("leagueName").value.trim();
-  const teams = document.getElementById("teamCount").value;
-  const draftType = document.getElementById("draftType").value;
-  const access = document.getElementById("leagueAccess").value;
-
-  if (!name) {
-    alert("Please enter a league name.");
-    return;
-  }
-
-  leagues.push({
-    id: Date.now(),
-    name: name,
-    teams: teams,
-    scoring: "Full PPR",
-    draft: draftType,
-    access: access
-  });
-
-  saveLeagues();
-  renderLeagues();
-
-  document.getElementById("leagueName").value = "";
-  alert("League created successfully!");
-}
-      </button>
-    </div>
-
-    <div class="card span7">
-      <h3>Public league directory</h3>
-      <div id="leagueDirectory">
-        No leagues created yet.
-      </div>
-    </div>
-  </div>
-</section>
+ 
 <section id="draft" class="section">
 <div class="hero"><div><div class="eyebrow">Draft room</div><h1>Build your roster</h1><div class="muted">Demo draft board · 12 teams · snake order</div></div><span class="pill warn" id="pickStatus">Pick 1 of 144</span></div>
 <div class="grid">
@@ -253,33 +166,7 @@ function renderLeagues() {
 }
 
 function createLeague() {
-  const name = document.getElementById("newLeagueName").value.trim();
-  const teams = document.getElementById("newLeagueTeams").value;
-  const scoring = document.getElementById("newLeagueScoring").value;
-  const draft = document.getElementById("draftType").value;
-  const access = document.getElementById("leagueAccess").value;
 
-  if (!name) {
-    alert("Please enter a league name.");
-    return;
-  }
-
-  leagues.push({
-    id: Date.now(),
-    name: name,
-    teams: teams,
-    scoring: scoring,
-    draft: draft,
-    access: access
-  });
-
-  saveLeagues();
-  renderLeagues();
-
-  document.getElementById("newLeagueName").value = "";
-
-  alert("Your league was created successfully!");
-}
   const name = document.getElementById("newLeagueName").value.trim();
 
   if (!name) {
