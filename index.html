@@ -41,6 +41,21 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
   <div class="grid">
     <div class="card span5">
       <h3>Create a league</h3>
+    <div class="field">
+  <label for="draftType">Draft Type</label>
+  <select id="draftType">
+    <option value="Snake" selected>Snake Draft</option>
+    <option value="Linear">Linear Draft</option>
+  </select>
+</div>
+
+<div class="field">
+  <label for="leagueAccess">League Access</label>
+  <select id="leagueAccess">
+    <option value="Public" selected>Public</option>
+    <option value="Private">Private</option>
+  </select>
+</div>
 
       <div class="field">
         <label>League name</label>
@@ -66,7 +81,32 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
       </div>
 
       <button class="btn" onclick="createLeague()">
-        Create league
+    function createLeague() {
+  const name = document.getElementById("leagueName").value.trim();
+  const teams = document.getElementById("teamCount").value;
+  const draftType = document.getElementById("draftType").value;
+  const access = document.getElementById("leagueAccess").value;
+
+  if (!name) {
+    alert("Please enter a league name.");
+    return;
+  }
+
+  leagues.push({
+    id: Date.now(),
+    name: name,
+    teams: teams,
+    scoring: "Full PPR",
+    draft: draftType,
+    access: access
+  });
+
+  saveLeagues();
+  renderLeagues();
+
+  document.getElementById("leagueName").value = "";
+  alert("League created successfully!");
+}
       </button>
     </div>
 
