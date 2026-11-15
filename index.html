@@ -209,7 +209,49 @@ function joinLeague(id) {
 
   alert("You successfully joined the league!");
 }
+function findLeagueByCode() {
+  const code = document.getElementById("joinLeagueCode").value.trim().toUpperCase();
+  const result = document.getElementById("joinLeagueResult");
 
+  if (!code) {
+    result.innerHTML = "Please enter a League ID.";
+    return;
+  }
+
+  const league = leagues.find(item =>
+    String(item.code || "").toUpperCase() === code
+  );
+
+  if (!league) {
+    result.innerHTML = "No league with that ID was found.";
+    return;
+  }
+
+  const members = Number(league.members || 0);
+  const full = members >= Number(league.teams);
+
+  let button = "";
+
+  if (league.joined) {
+    button = '<button class="btn secondary" disabled>Already Joined</button>';
+  } else if (full) {
+    button = '<button class="btn secondary" disabled>League Full</button>';
+  } else {
+    button = `<button class="btn" onclick="joinLeague(${league.id})">Join League</button>`;
+  }
+
+  result.innerHTML = `
+    <div class="card" style="margin-top:12px">
+      <h3>${escapeLeagueText(league.name)}</h3>
+      <p>League ID: ${escapeLeagueText(league.code)}</p>
+      <p>${league.teams} teams · ${escapeLeagueText(league.scoring)}</p>
+      <p>Draft: ${escapeLeagueText(league.draft || "Snake")}</p>
+      <p>Members: ${members}/${league.teams}</p>
+      <span class="pill good">${escapeLeagueText(league.access || "Public")}</span>
+      <div style="margin-top:12px">${button}</div>
+    </div>
+  `;
+}
 function createLeague() {
 
   const name = document.getElementById("newLeagueName").value.trim();
