@@ -27,7 +27,7 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
 <button class="nav" data-tab="settings">Settings</button>
 </nav>
 <main>
-<section id="dashboard" class="section active">
+<="dashboard" class="section active">
 <div class="hero"><div><div class="eyebrow">2027 season workspace · public leagues</div><h1>League HQ</h1><div class="muted">12-team · Full PPR · Snake draft</div></div><button class="btn" onclick="switchTab('draft')">Open draft room →</button></div>
 <div class="grid">
 <div class="card span3"><div class="muted">League members</div><div class="stat">12 / 12</div><span class="pill good">League capacity</span></div>
@@ -37,7 +37,7 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
 <div class="card span7"><h3>League standings</h3><table><thead><tr><th>Rank</th><th>Team</th><th>W-L</th><th>Points</th></tr></thead><tbody id="standings"></tbody></table><div class="small">Sample preseason standings — live standings begin when a season data feed is connected.</div></div>
 <div class="card span5"><h3>Fairness checklist</h3><div id="checklist"></div></div>
 <div class="card span12"><h3>League activity</h3><div id="activity" class="small"></div></div>
-</div></section><section id="leagues" class="section">
+</div></section><="leagues" class="section">
   <div class="hero">
     <div>
       <div class="eyebrow">League management</div>
@@ -99,22 +99,39 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
   </div>
 </section>
  
-<section id="draft" class="section">
+<section id="join" class="section">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Find a league</div>
+      <h1>Join a League</h1>
+      <div class="muted">Enter a League ID to find a league.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Enter League ID</h3>
+    <div class="field">
+      <input id="joinLeagueCode" placeholder="Example: FF-123456">
+    </div>
+    <button class="btn" onclick="findLeagueByCode()">Find League</button>
+    <div id="joinLeagueResult" style="margin-top:15px"></div>
+  </div>
+</section><="draft" class="section">
 <div class="hero"><div><div class="eyebrow">Draft room</div><h1>Build your roster</h1><div class="muted">Demo draft board · 12 teams · snake order</div></div><span class="pill warn" id="pickStatus">Pick 1 of 144</span></div>
 <div class="grid">
 <div class="card span8"><div class="row"><h3>Available player pool</h3><span class="pill">Sample players</span></div><div class="field"><input id="playerSearch" placeholder="Search players or positions…" oninput="renderPlayers()"></div><div class="playerlist" id="players"></div></div>
 <div class="card span4"><h3>On the clock</h3><div class="stat" id="onClock">Team 1</div><div class="muted small" id="pickNumber">Overall pick 1 · Round 1</div><div class="notice" style="margin:14px 0">This is a local draft-room prototype. Picks are saved in this browser only.</div><h3>Recent picks</h3><div id="recentPicks" class="small">No picks yet.</div><button class="btn secondary" style="margin-top:14px" onclick="undoPick()">Undo last pick</button></div>
 <div class="card span12"><h3>Draft board</h3><div id="draftBoard" class="small"></div></div>
 </div></section>
-<section id="teams" class="section"><div class="hero"><div><div class="eyebrow">League directory</div><h1>Teams & rosters</h1><div class="muted">12 team slots are ready for owners.</div></div></div><div class="grid" id="teamCards"></div></section>
-<section id="trades" class="section"><div class="hero"><div><div class="eyebrow">League governance</div><h1>Trade review center</h1><div class="muted">Transparent review, owner voting, and a permanent decision record.</div></div></div>
+<="teams" class="section"><div class="hero"><div><div class="eyebrow">League directory</div><h1>Teams & rosters</h1><div class="muted">12 team slots are ready for owners.</div></div></div><div class="grid" id="teamCards"></div></section>
+<="trades" class="section"><div class="hero"><div><div class="eyebrow">League governance</div><h1>Trade review center</h1><div class="muted">Transparent review, owner voting, and a permanent decision record.</div></div></div>
 <div class="grid"><div class="card span5"><h3>Submit a trade for review</h3><div class="field"><label>Team A</label><select id="tradeA"></select></div><div class="field"><label>Team B</label><select id="tradeB"></select></div><div class="field"><label>Assets Team A sends</label><input id="sendA" placeholder="Player names / picks"></div><div class="field"><label>Assets Team B sends</label><input id="sendB" placeholder="Player names / picks"></div><div class="field"><label>Reason / context (optional)</label><textarea id="tradeReason" rows="2"></textarea></div><button class="btn" onclick="submitTrade()">Submit for review</button></div>
 <div class="card span7"><h3>Trade queue & votes</h3><div id="tradeList" class="small empty">No trades submitted yet.</div></div></div></section>
-<section id="integrity" class="section"><div class="hero"><div><div class="eyebrow">Trust & transparency</div><h1>Integrity center</h1><div class="muted">Report concerns and preserve a clear record of league decisions.</div></div></div>
+<="integrity" class="section"><div class="hero"><div><div class="eyebrow">Trust & transparency</div><h1>Integrity center</h1><div class="muted">Report concerns and preserve a clear record of league decisions.</div></div></div>
 <div class="grid"><div class="card span5"><h3>File an integrity report</h3><div class="field"><label>Concern type</label><select id="reportType"><option>Possible collusion</option><option>Roster dumping / tanking</option><option>Unauthorized account access</option><option>Rule violation</option><option>Commissioner conduct</option><option>Other</option></select></div><div class="field"><label>Teams involved (if known)</label><input id="reportTeams" placeholder="Team names"></div><div class="field"><label>What happened?</label><textarea id="reportDetails" rows="4" placeholder="Describe observable facts, dates, and evidence."></textarea></div><button class="btn" onclick="fileReport()">File report</button></div>
 <div class="card span7"><h3>Integrity reports</h3><div id="reports" class="small empty">No reports filed. Reports are allegations, not findings.</div><div class="notice" style="margin-top:15px">Fair process: restrict access to reviewers, allow a response from involved owners, require documented evidence, and record a reasoned decision. Never auto-punish based on an algorithmic flag.</div></div>
 <div class="card span12"><h3>Audit log</h3><div id="audit" class="small">No administrative actions yet.</div></div></div></section>
-<section id="settings" class="section"><div class="hero"><div><div class="eyebrow">League configuration</div><h1>Settings</h1><div class="muted">Core league rules for Fantasy Fairness.</div></div></div>
+<="settings" class="section"><div class="hero"><div><div class="eyebrow">League configuration</div><h1>Settings</h1><div class="muted">Core league rules for Fantasy Fairness.</div></div></div>
 <div class="grid"><div class="card span6"><h3>League basics</h3><div class="field"><label>League name</label><input value="Fantasy Fairness"></div><div class="field"><label>Teams</label><input value="12 teams" disabled></div><div class="field"><label>Scoring</label><input value="Full PPR" disabled></div><div class="field"><label>Draft</label><input value="Snake draft" disabled></div><div class="field"><label>Visibility</label><input value="Public league directory" disabled></div></div>
 <div class="card span6"><h3>Default scoring preview</h3><table><tr><td>Reception</td><td>1.0</td></tr><tr><td>Passing yards</td><td>0.04 / yard</td></tr><tr><td>Passing TD</td><td>4</td></tr><tr><td>Rushing / receiving yards</td><td>0.1 / yard</td></tr><tr><td>Rushing / receiving TD</td><td>6</td></tr><tr><td>Interception thrown</td><td>-2</td></tr><tr><td>Fumble lost</td><td>-2</td></tr></table><p class="small">Illustrative defaults. Final scoring, roster slots, waiver priority, playoff format, and tie-breakers must be approved before launch.</p></div>
 <div class="card span12"><h3>Before public launch</h3><div class="notice">This prototype does not yet have secure user accounts, shared cloud storage, a live NFL statistics feed, payments, email verification, or production-grade league isolation. Do not enter passwords or private personal information here.</div></div></div></section>
