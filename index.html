@@ -238,20 +238,6 @@ function findLeagueByCode() {
     return;
   }
 
- 
-  league.joined = true;
-  league.members = members + 1;
-
-  saveLeagues();
-  renderLeagues();
-
-  result.innerHTML = "Successfully joined " + league.name + "!";
-
-  if (typeof renderDashboard === "function") {
-    renderDashboard();
-  }
-}
-
   const league = leagues.find(item =>
     String(item.code || "").toUpperCase() === code
   );
