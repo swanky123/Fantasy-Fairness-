@@ -238,28 +238,7 @@ function findLeagueByCode() {
     return;
   }
 
-  const league = leagues.find(item =>
-    String(item.code || "").toUpperCase() === code
-  );
-
-  if (!league) {
-    result.innerHTML = "No league with that ID was found.";
-    return;
-  }
-
-  if (league.joined) {
-    result.innerHTML = "You have already joined this league.";
-    return;
-  }
-
-  const members = Number(league.members || 0);
-  const maxTeams = Number(league.teams || 12);
-
-  if (members >= maxTeams) {
-    result.innerHTML = "This league is full.";
-    return;
-  }
-
+ 
   league.joined = true;
   league.members = members + 1;
 
