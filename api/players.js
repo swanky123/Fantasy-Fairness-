@@ -1,4 +1,3 @@
-
 function parseCSV(text) {
   const rows = [];
   let row = [];
@@ -45,7 +44,7 @@ function parseCSV(text) {
   });
 }
 
-const teams = [
+const TEAMS = [
   ["ARI", "Arizona Cardinals"],
   ["ATL", "Atlanta Falcons"],
   ["BAL", "Baltimore Ravens"],
@@ -80,86 +79,70 @@ const teams = [
   ["WAS", "Washington Commanders"]
 ];
 
+// nflverse sometimes uses older or alternate team codes
+const TEAM_FIX = { LA: "LAR", STL: "LAR", OAK: "LV", SD: "LAC", WSH: "WAS", JAC: "JAX", ARZ: "ARI", BLT: "BAL", CLV: "CLE", HST: "HOU" };
+const POSITIONS = new Set(["QB", "RB", "WR", "TE", "K", "FB"]);
+const SOURCE_URL = "https://github.com/nflverse/nflverse-data/releases/download/players/players.csv";
+const CACHE_MS = 6 * 60 * 60 * 1000;
+
+let cache = { at: 0, body: null };
+
+async function buildPayload() {
+  const response = await fetch(SOURCE_URL, { signal: AbortSignal.timeout(20000) });
+  if (!response.ok) throw new Error("NFL player data source returned " + response.status);
+
+  const records = parseCSV(await response.text());
+  const now = new Date();
+  const season = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
+  const seen = new Set();
+
+  const players = [];
+  for (const p of records) {
+    const position = p.position === "FB" ? "RB" : p.position; // FBs draft as RBs
+    const team = (TEAM_FIX[p.latest_team] || p.latest_team || p.team || "").toUpperCase();
+    const id = p.gsis_id || (p.espn_id ? "espn-" + p.espn_id : "");
+    const name = p.display_name || [p.first_name, p.last_name].filter(Boolean).join(" ");
+    const lastSeason = Number(p.last_season || 0);
+
+    if (!id || !name || !POSITIONS.has(p.position) || !team) continue;
+    if (p.status === "RET") continue;                // retired
+    if (lastSeason && lastSeason < season - 1) continue; // not seen recently
+    if (seen.has(id)) continue;
+    seen.add(id);
+
+    players.push({
+      id, name, position, team,
+      status: p.status || "Unknown",
+      headshot: p.headshot || p.headshot_url || "",
+      type: "player"
+    });
+  }
+
+  const defenses = TEAMS.map(([code, name]) => ({
+    id: "DST-" + code, name: name + " Defense", position: "D/ST",
+    team: code, teamName: name, status: "Active", headshot: "", type: "defense"
+  }));
+
+  const all = [...players, ...defenses];
+  return {
+    success: true, source: "nflverse", updatedAt: now.toISOString(),
+    totalPlayers: all.length, playerCount: players.length, defenseCount: defenses.length,
+    players: all
+  };
+}
+
 module.exports = async function (req, res) {
-  res.setHeader(
-    "Cache-Control",
-    "s-maxage=3600, stale-while-revalidate=86400"
-  );
+  res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   try {
-    const url =
-      "https://github.com/nflverse/nflverse-data/releases/download/players/players.csv";
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error("NFL player data source returned an error.");
+    if (!cache.body || Date.now() - cache.at > CACHE_MS) {
+      cache = { at: Date.now(), body: await buildPayload() };
     }
-
-    const csv = await response.text();
-    const records = parseCSV(csv);
-
-    const players = records
-      .map(player => ({
-        id:
-          player.gsis_id ||
-          player.player_id ||
-          player.espn_id ||
-          "",
-        name:
-          player.display_name ||
-          player.full_name ||
-          player.player_name ||
-          [player.first_name, player.last_name]
-            .filter(Boolean)
-            .join(" "),
-        position: player.position || "",
-        team:
-          player.team ||
-          player.team_abbr ||
-          player.recent_team ||
-          "Unknown",
-        status: player.status || "Unknown",
-        headshot: player.headshot_url || "",
-        type: "player"
-      }))
-      .filter(player =>
-        player.name &&
-        ["QB", "RB", "WR", "TE", "K", "FB"].includes(player.position)
-      );
-
-    const defenses = teams.map(([code, name]) => ({
-      id: `DST-${code}`,
-      name: `${name} Defense`,
-      position: "D/ST",
-      team: code,
-      teamName: name,
-      status: "Active",
-      headshot: "",
-      type: "defense"
-    }));
-
-    const allPlayers = [
-      ...players,
-      ...defenses
-    ];
-
-    res.status(200).json({
-      success: true,
-      source: "nflverse",
-      updatedAt: new Date().toISOString(),
-      totalPlayers: allPlayers.length,
-      playerCount: players.length,
-      defenseCount: defenses.length,
-      players: allPlayers
-    });
-
+    res.status(200).json(cache.body);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to import NFL players right now.",
-      error: error.message
-    });
+    // Serve stale data if we have it rather than breaking the draft room
+    if (cache.body) return res.status(200).json({ ...cache.body, stale: true });
+    res.status(500).json({ success: false, message: "Unable to import NFL players right now.", error: error.message });
   }
 };
