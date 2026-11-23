@@ -83,7 +83,28 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
 <div class="grid">
 <div class="card span8"><div class="row"><h3>Available player pool</h3><span class="pill">Sample players</span></div><div class="field">
   <label>Search Players</label>
+<div class="field">
+  <label>Search Players</label>
   <input id="playerSearch" placeholder="Search players, teams, or positions…" oninput="renderPlayers()">
+</div>
+
+<div class="field">
+  <label>Filter by Position</label>
+  <select id="posFilter" onchange="renderPlayers()">
+    <option value="">All Positions</option>
+    <option value="QB">Quarterbacks</option>
+    <option value="RB">Running Backs</option>
+    <option value="WR">Wide Receivers</option>
+    <option value="TE">Tight Ends</option>
+    <option value="K">Kickers</option>
+    <option value="D/ST">Team Defense</option>
+  </select>
+</div>
+
+<div class="row">
+  <span id="poolSource" class="pill warn">Loading NFL player database...</span>
+  <span id="poolCount" class="small">Loading players...</span>
+</div>
 </div>
 
 <div class="field">
