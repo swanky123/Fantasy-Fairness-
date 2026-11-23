@@ -81,7 +81,28 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
 <section id="draft" class="section">
 <div class="hero"><div><div class="eyebrow">Draft room</div><h1>Build your roster</h1><div class="muted">Demo draft board · 12 teams · snake order</div></div><span class="pill warn" id="pickStatus">Pick 1 of 144</span></div>
 <div class="grid">
-<div class="card span8"><div class="row"><h3>Available player pool</h3><span class="pill">Sample players</span></div><div class="field"><input id="playerSearch" placeholder="Search players or positions…" oninput="renderPlayers()"></div><div class="playerlist" id="players"></div></div>
+<div class="card span8"><div class="row"><h3>Available player pool</h3><span class="pill">Sample players</span></div><div class="field">
+  <label>Search Players</label>
+  <input id="playerSearch" placeholder="Search players, teams, or positions…" oninput="renderPlayers()">
+</div>
+
+<div class="field">
+  <label>Filter by Position</label>
+  <select id="posFilter" onchange="renderPlayers()">
+    <option value="">All Positions</option>
+    <option value="QB">Quarterbacks</option>
+    <option value="RB">Running Backs</option>
+    <option value="WR">Wide Receivers</option>
+    <option value="TE">Tight Ends</option>
+    <option value="K">Kickers</option>
+    <option value="D/ST">Team Defense</option>
+  </select>
+</div>
+
+<div class="row">
+  <span id="poolSource" class="pill warn">Loading NFL player database...</span>
+  <span id="poolCount" class="small">Loading players...</span>
+</div><div class="playerlist" id="players"></div></div>
 <div class="card span4"><h3>On the clock</h3><div class="stat" id="onClock">Team 1</div><div class="muted small" id="pickNumber">Overall pick 1 · Round 1</div><div class="notice" style="margin:14px 0">This is a local draft-room prototype. Picks are saved in this browser only.</div><h3>Recent picks</h3><div id="recentPicks" class="small">No picks yet.</div><button class="btn secondary" style="margin-top:14px" onclick="undoPick()">Undo last pick</button></div>
 <div class="card span12"><h3>Draft board</h3><div id="draftBoard" class="small"></div></div>
 </div>
