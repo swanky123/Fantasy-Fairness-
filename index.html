@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Fantasy Fairness — League HQ</title>
+<meta name="description" content="Fantasy football leagues built on transparent rules: owner-voted trades, written integrity reviews, and a permanent audit log.">
+<meta property="og:title" content="Fantasy Fairness"><meta property="og:description" content="A better league starts with fair rules.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏈%3C/text%3E%3C/svg%3E">
 <style>
 :root{--bg:#0b1220;--panel:#121d30;--panel2:#17253b;--line:#263750;--text:#edf4ff;--muted:#9aabc3;--green:#8be28b;--lime:#b6f36a;--red:#ff8585;--gold:#ffd479}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% -10%,#1e3d50 0,transparent 34%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
@@ -26,6 +29,7 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
 <button class="nav" data-tab="settings">Settings</button>
 </nav>
 </header>
+<div class="notice" style="margin:0;border-radius:0;text-align:center">Preview release — leagues, drafts, votes and reports are saved in <b>this browser only</b> and are not shared with other people yet.</div>
 <main>
 <section id="dashboard" class="section active">
 <div class="hero"><div><div class="eyebrow">2027 season workspace · public leagues</div><h1>League HQ</h1><div class="muted">12-team · Full PPR · Snake draft</div></div><button class="btn" onclick="switchTab('draft')">Open draft room →</button></div>
@@ -193,6 +197,8 @@ main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify
   <p id="waiverSaveStatus" class="small">Rules have not been saved yet.</p>
 </div>
   <div class="card span12"><h3>Before public launch</h3><div class="notice">This prototype does not yet have secure user accounts, shared cloud storage, a live NFL statistics feed, payments, email verification, or production-grade league isolation. Do not enter passwords or private personal information here.</div></div>
+  <div class="card span6"><h3>Your data</h3><p class="small">Everything in this preview is stored in this browser only. Clearing it removes your leagues, draft, trades, reports and settings on this device.</p><button class="btn danger" onclick="clearAllData()">Clear my data</button></div>
+  <div class="card span6"><h3>About this release</h3><div class="notice">Preview release. There are no accounts yet, so leagues, drafts and votes are not shared between people or devices. Do not enter passwords or private information.</div></div>
 </div>
 </section>
 
@@ -633,5 +639,503 @@ initTradeTeams();
 renderLeagues();
 renderPublicLeagues();
 </script>
-</body>
-</html>
+<script>
+/* =====================================================================
+   LAUNCH ADDITIONS
+   Everything above this block is the original code, unchanged.
+   Functions below re-declare the originals with the same names, so the
+   page uses the improved versions. Nothing was deleted.
+   ===================================================================== */
+
+/* ---------- helpers ---------- */
+const FF_KEY = "fantasyFairnessStateV3";
+const FF_TEAMS = 12;
+const FF_TOTAL = 144;
+
+function ffEsc(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+function ffById(id) {
+  return document.getElementById(id);
+}
+
+/* ---------- persistence (picks, trades, reports, logs survive a refresh) ---------- */
+function ffSave() {
+  try {
+    localStorage.setItem(FF_KEY, JSON.stringify({
+      picks: picks,
+      trades: trades,
+      reports: reports,
+      audit: audit,
+      activity: activity
+    }));
+  } catch (e) {
+    // storage unavailable (private mode / full) — app keeps working in memory
+  }
+}
+
+function ffLoad() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(FF_KEY) || "null");
+    if (!saved) return;
+
+    picks = Array.isArray(saved.picks) ? saved.picks : [];
+    trades = Array.isArray(saved.trades) ? saved.trades : [];
+    reports = Array.isArray(saved.reports) ? saved.reports : [];
+    audit = Array.isArray(saved.audit) ? saved.audit : [];
+    activity = Array.isArray(saved.activity) ? saved.activity : [];
+
+    teams.forEach(function (t) { t.roster = []; });
+    picks.forEach(function (p) {
+      if (teams[p.team]) teams[p.team].roster.push(p.player);
+    });
+  } catch (e) {
+    // corrupt saved data — start fresh
+  }
+}
+
+function ffLog(message, activityText) {
+  audit.push(new Date().toLocaleString() + " — " + message);
+  if (activityText) activity.push(activityText);
+  ffSave();
+}
+
+function ffRenderAll() {
+  renderDashboard();
+  renderDraft();
+  renderTeams();
+  renderTrades();
+  renderReports();
+  renderAudit();
+}
+
+/* ---------- player pool: live feed with the original list as fallback ---------- */
+let ffPool = pool.map(function (p, i) {
+  return { id: "S-" + i, name: p[0], pos: p[1] === "DST" ? "D/ST" : p[1], team: p[2], f: i };
+});
+let ffLive = false;
+
+async function ffLoadPool() {
+  const badge = ffById("poolSource");
+  try {
+    const response = await fetch("/api/players");
+    const data = await response.json();
+
+    if (!response.ok || !data.success || !data.players || !data.players.length) {
+      throw new Error(data.message || "Bad response");
+    }
+
+    const featured = new Map(pool.map(function (p, i) { return [p[0].toLowerCase(), i]; }));
+
+    ffPool = data.players
+      .filter(function (p) { return p.id && p.name; })
+      .map(function (p) {
+        const key = p.name.toLowerCase();
+        return {
+          id: String(p.id),
+          name: p.name,
+          pos: p.position,
+          team: p.team,
+          f: featured.has(key) ? featured.get(key) : 9999
+        };
+      })
+      .sort(function (a, b) { return a.f - b.f || a.name.localeCompare(b.name); });
+
+    ffLive = true;
+    if (badge) {
+      badge.textContent = "Live NFL data · " + ffPool.length + " players";
+      badge.className = "pill good";
+    }
+  } catch (e) {
+    ffLive = false;
+    if (badge) {
+      badge.textContent = "Sample players (live feed unavailable)";
+      badge.className = "pill warn";
+    }
+  }
+  renderDraft();
+  renderDashboard();
+}
+
+/* ---------- dashboard ---------- */
+function renderDashboard() {
+  ffById("standings").innerHTML = teams.map(function (t, i) {
+    return "<tr><td>" + (i + 1) + "</td><td>" + ffEsc(t.name) + "</td><td>0-0</td><td>—</td></tr>";
+  }).join("");
+
+  const items = [
+    ["League Manager assigned", !!localStorage.getItem("fantasyFairnessManager")],
+    ["Commissioner actions logged", true],
+    ["Trade review process published", true],
+    ["Waiver and tie-break rules set", !!localStorage.getItem("fantasyFairnessWaiverRules")],
+    ["NFL data provider connected", ffLive]
+  ];
+
+  ffById("checklist").innerHTML = items.map(function (item) {
+    return '<div class="row" style="padding:7px 0"><span>' + item[0] + '</span><span class="pill ' +
+      (item[1] ? "good" : "warn") + '">' + (item[1] ? "Ready" : "Pending") + "</span></div>";
+  }).join("");
+
+  ffById("activity").innerHTML = activity.length
+    ? activity.slice(-30).reverse().map(function (x) {
+        return '<div style="padding:5px 0">' + ffEsc(x) + "</div>";
+      }).join("")
+    : "No activity yet. Draft picks, reports, and trade submissions will appear here.";
+}
+
+/* ---------- settings ---------- */
+function saveWaiverRules() {
+  const rules = {
+    waiverType: ffById("waiverType").value,
+    waiverPriority: ffById("waiverPriority").value,
+    waiverTime: ffById("waiverTime").value,
+    tieBreaker: ffById("tieBreaker").value,
+    tieBreaker2: ffById("tieBreaker2").value
+  };
+
+  if (rules.tieBreaker === rules.tieBreaker2) {
+    alert("Please choose two different tiebreakers.");
+    return;
+  }
+
+  localStorage.setItem("fantasyFairnessWaiverRules", JSON.stringify(rules));
+  ffById("waiverSaveStatus").textContent = "Waiver rules saved successfully!";
+
+  ffLog(
+    "Waiver rules updated (" + rules.waiverType + ", " + rules.waiverPriority + ", " +
+      rules.waiverTime + "; tiebreakers: " + rules.tieBreaker + " then " + rules.tieBreaker2 + ")",
+    "Settings: waiver rules updated"
+  );
+  renderDashboard();
+  renderAudit();
+
+  alert("Your waiver rules have been saved!");
+}
+
+function saveManagerPermissions() {
+  const managerName = ffById("leagueManagerName").value.trim();
+  const permissions = ffById("managerPermissions").value;
+
+  if (!managerName) {
+    alert("Please enter the League Manager's name.");
+    return;
+  }
+
+  localStorage.setItem("fantasyFairnessManager", JSON.stringify({
+    managerName: managerName,
+    permissions: permissions
+  }));
+
+  ffById("managerSaveStatus").textContent =
+    "League Manager settings saved for " + managerName + ".";
+
+  ffLog("League Manager set to " + managerName, "Settings: League Manager updated");
+  renderDashboard();
+  renderAudit();
+
+  alert("League Manager settings saved!");
+}
+
+function loadSettings() {
+  loadWaiverRules(); // original function — it was defined but never called
+
+  try {
+    const saved = JSON.parse(localStorage.getItem("fantasyFairnessManager") || "null");
+    if (saved) {
+      ffById("leagueManagerName").value = saved.managerName || "";
+      ffById("managerPermissions").value = saved.permissions || "manager-only";
+      ffById("managerSaveStatus").textContent = "League Manager: " + (saved.managerName || "");
+    }
+  } catch (e) {}
+}
+
+function clearAllData() {
+  if (!confirm("Clear ALL Fantasy Fairness data stored in this browser? This cannot be undone.")) return;
+  [FF_KEY, "fantasyFairnessLeagues", "fantasyFairnessWaiverRules", "fantasyFairnessManager"].forEach(function (k) {
+    try { localStorage.removeItem(k); } catch (e) {}
+  });
+  location.reload();
+}
+
+/* ---------- leagues: creator joins automatically, unique League IDs ---------- */
+function createLeague() {
+  const name = ffById("newLeagueName").value.trim();
+  const teamCount = Number(ffById("newLeagueTeams").value);
+  const scoring = ffById("newLeagueScoring").value;
+  const draft = ffById("draftType").value;
+  const access = ffById("leagueAccess").value;
+
+  if (!name) {
+    alert("Please enter a league name.");
+    return;
+  }
+
+  if (name.length > 60) {
+    alert("League names must be 60 characters or fewer.");
+    return;
+  }
+
+  let code;
+  do {
+    code = "FF-" + Math.floor(100000 + Math.random() * 900000);
+  } while (leagues.some(function (l) { return l.code === code; }));
+
+  leagues.push({
+    id: Date.now(),
+    code: code,
+    name: name,
+    teams: teamCount,
+    scoring: scoring,
+    draft: draft,
+    access: access,
+    members: 1,
+    joined: true
+  });
+
+  saveLeagues();
+  renderLeagues();
+  renderPublicLeagues();
+  ffById("newLeagueName").value = "";
+
+  ffLog("League created: " + name + " (" + code + ")", "League created: " + name);
+  renderDashboard();
+  renderAudit();
+
+  alert("Your league was created successfully! Share this League ID: " + code);
+}
+
+/* ---------- draft ---------- */
+function renderPlayers() {
+  const searchBox = ffById("playerSearch");
+  const posBox = ffById("posFilter");
+  const q = ((searchBox && searchBox.value) || "").toLowerCase().trim();
+  const pos = posBox ? posBox.value : "";
+  const drafted = new Set(picks.map(function (p) { return p.id || p.player; }));
+
+  const list = ffPool.filter(function (p) {
+    if (drafted.has(p.id) || drafted.has(p.name)) return false;
+    if (pos && p.pos !== pos) return false;
+    return !q || (p.name + " " + p.pos + " " + p.team).toLowerCase().includes(q);
+  });
+
+  const countBox = ffById("poolCount");
+  if (countBox) {
+    countBox.textContent = list.length + " available" +
+      (list.length > 100 ? " · showing first 100 — search or filter to narrow" : "");
+  }
+
+  ffById("players").innerHTML = list.slice(0, 100).map(function (p) {
+    return '<div class="player"><div><b>' + ffEsc(p.name) + '</b><div class="small">' +
+      ffEsc(p.pos) + " · " + ffEsc(p.team) + '</div></div><button class="btn secondary" data-id="' +
+      ffEsc(p.id) + '">Draft</button></div>';
+  }).join("") || '<div class="empty">No available players match.</div>';
+}
+
+function makePick(id) {
+  if (picks.length >= FF_TOTAL) return alert("The draft is complete.");
+
+  const player = ffPool.find(function (p) { return p.id === id; });
+  if (!player) return;
+  if (picks.some(function (p) { return p.id === id || p.player === player.name; })) return;
+
+  const ti = snakeTeam(picks.length);
+  const round = Math.floor(picks.length / FF_TEAMS) + 1;
+  const overall = picks.length + 1;
+  const t = teams[ti];
+
+  if (!confirm(t.name + " drafts " + player.name + " (" + player.pos + ")?")) return;
+
+  t.roster.push(player.name);
+  picks.push({ team: ti, player: player.name, round: round, overall: overall, id: player.id, pos: player.pos });
+
+  ffLog("Pick " + overall + ": " + t.name + " drafted " + player.name,
+        "Draft: " + t.name + " selected " + player.name + " (#" + overall + ")");
+
+  renderDraft();
+  renderDashboard();
+  renderTeams();
+}
+
+function undoPick() {
+  const last = picks[picks.length - 1];
+  if (!last) return;
+  if (!confirm("Undo pick #" + last.overall + " (" + last.player + ")?")) return;
+
+  picks.pop();
+  teams[last.team].roster = teams[last.team].roster.filter(function (x) { return x !== last.player; });
+
+  ffLog("Commissioner undid pick " + last.overall + " (" + last.player + ")",
+        "Draft: pick #" + last.overall + " undone");
+
+  renderDraft();
+  renderDashboard();
+  renderTeams();
+  renderAudit();
+}
+
+function resetDraft() {
+  if (!picks.length) return;
+  if (!confirm("Reset the entire draft? All picks will be cleared (the audit log keeps a record).")) return;
+
+  picks = [];
+  teams.forEach(function (t) { t.roster = []; });
+
+  ffLog("Draft was reset", "Draft reset");
+  ffRenderAll();
+}
+
+function renderDraft() {
+  const n = picks.length;
+  const ti = snakeTeam(n);
+
+  ffById("pickStatus").textContent = "Pick " + Math.min(n + 1, FF_TOTAL) + " of " + FF_TOTAL;
+  ffById("onClock").textContent = n >= FF_TOTAL ? "Draft complete" : teams[ti].name;
+  ffById("pickNumber").textContent = n >= FF_TOTAL
+    ? "All picks made"
+    : "Overall pick " + (n + 1) + " · Round " + (Math.floor(n / FF_TEAMS) + 1);
+
+  ffById("recentPicks").innerHTML = picks.slice(-8).reverse().map(function (p) {
+    return "#" + p.overall + " " + ffEsc(teams[p.team].name) + ": " + ffEsc(p.player);
+  }).join("<br>") || "No picks yet.";
+
+  ffById("draftBoard").innerHTML = picks.length
+    ? picks.map(function (p) {
+        return '<span class="pill" style="margin:3px">#' + p.overall + " " +
+          ffEsc(teams[p.team].name) + ": " + ffEsc(p.player) + (p.pos ? " (" + ffEsc(p.pos) + ")" : "") + "</span>";
+      }).join("")
+    : "Draft board is empty.";
+
+  renderPlayers();
+}
+
+function renderTeams() {
+  ffById("teamCards").innerHTML = teams.map(function (t, i) {
+    const rows = t.roster.map(function (x) {
+      return '<div class="small" style="padding:4px 0;border-bottom:1px solid var(--line)">' + ffEsc(x) + "</div>";
+    }).join("") || '<span class="small">Roster empty</span>';
+
+    return '<div class="card span3"><div class="team"><div class="avatar">' + (i + 1) + "</div><b>" +
+      ffEsc(t.name) + '</b></div><div class="stat">' + t.roster.length +
+      '</div><div class="small">Players drafted</div><div style="margin-top:10px">' + rows + "</div></div>";
+  }).join("");
+}
+
+/* ---------- trades: one vote per team, traders recused, majority is final ---------- */
+function tradeInfo(t) {
+  const votes = t.votes && typeof t.votes === "object" ? Object.values(t.votes) : [];
+  const yes = votes.filter(function (v) { return v === "approve"; }).length;
+  const no = votes.length - yes;
+  const eligible = FF_TEAMS - 2;
+  const needed = Math.floor(eligible / 2) + 1;
+  let outcome = "open";
+
+  if (t.decision) outcome = t.decision;
+  else if (yes >= needed) outcome = "approved";
+  else if (no >= needed) outcome = "rejected";
+  else if (votes.length >= eligible) outcome = "tied";
+
+  return { yes: yes, no: no, needed: needed, outcome: outcome };
+}
+
+function tradeStatusText(t) {
+  const info = tradeInfo(t);
+  if (info.outcome === "open") {
+    return ["Voting open — " + info.yes + " approve / " + info.no + " reject (" + info.needed + " needed)", "warn"];
+  }
+  if (info.outcome === "tied") {
+    return ["Tied " + info.yes + "–" + info.no + " — commissioner decides", "warn"];
+  }
+  const how = t.decision ? "by commissioner after a tie" : "by owners";
+  return [(info.outcome === "approved" ? "Approved " : "Rejected ") + how, info.outcome === "approved" ? "good" : "bad"];
+}
+
+function submitTrade() {
+  const a = +ffById("tradeA").value;
+  const b = +ffById("tradeB").value;
+  if (a === b) return alert("Choose two different teams.");
+
+  const sa = ffById("sendA").value.trim();
+  const sb = ffById("sendB").value.trim();
+  if (!sa || !sb) return alert("Enter assets from both teams.");
+
+  trades.push({ a: a, b: b, sa: sa, sb: sb, reason: ffById("tradeReason").value.trim(), votes: {} });
+
+  ffLog("Trade submitted: " + teams[a].name + " ↔ " + teams[b].name,
+        "Trade review submitted: " + teams[a].name + " and " + teams[b].name);
+
+  ["sendA", "sendB", "tradeReason"].forEach(function (id) { ffById(id).value = ""; });
+
+  renderTrades();
+  renderAudit();
+  renderDashboard();
+}
+
+function voteTrade(i, decision) {
+  const t = trades[i];
+  const select = ffById("voter" + i);
+  const voter = select ? select.value : "";
+
+  if (voter === "") return alert("Choose which team you are voting as.");
+  if (tradeInfo(t).outcome !== "open") return alert("Voting on this trade is closed.");
+  if (t.votes[voter]) return alert("That team has already voted.");
+
+  t.votes[voter] = decision;
+
+  ffLog(teams[voter].name + " voted to " + decision + " trade " + (i + 1),
+        "Trade " + (i + 1) + ": " + teams[voter].name + " voted " + decision);
+
+  renderTrades();
+  renderAudit();
+  renderDashboard();
+}
+
+function decideTrade(i, decision) {
+  const why = (prompt("Written reason for the tie-break (required, 10+ characters):") || "").trim();
+  if (why.length < 10) return alert("A written reason of at least 10 characters is required.");
+
+  trades[i].decision = decision;
+  trades[i].decisionNote = why;
+
+  ffLog("Commissioner broke the tie on trade " + (i + 1) + ": " + decision + ". Reason: " + why,
+        "Trade " + (i + 1) + ": commissioner " + decision + " after a tie");
+
+  renderTrades();
+  renderAudit();
+  renderDashboard();
+}
+
+function renderTrades() {
+  ffById("tradeList").innerHTML = trades.length
+    ? trades.map(function (t, i) {
+        const status = tradeStatusText(t);
+        const outcome = tradeInfo(t).outcome;
+
+        const options = teams.map(function (team, j) {
+          if (j === t.a || j === t.b) return "";
+          const voted = t.votes[j];
+          return '<option value="' + j + '"' + (voted ? " disabled" : "") + ">" +
+            ffEsc(team.name) + (voted ? " (voted)" : "") + "</option>";
+        }).join("");
+
+        const ballots = Object.keys(t.votes).map(function (j) {
+          return ffEsc(teams[j].name) + ": " + ffEsc(t.votes[j]);
+        }).join(" · ") || "No votes yet";
+
+        let controls = "";
+        if (outcome === "open") {
+          controls = '<div class="actions" style="margin-top:10px"><select id="voter' + i +
+            '" style="width:auto"><option value="">Vote as…</option>' + options + "</select>" +
+            '<button class="btn secondary" onclick="voteTrade(' + i + ",'approve')\">Approve</button>" +
+            '<button class="btn secondary" onclick="voteTrade(' + i + ",'reject')\">Reject</button></div>";
+        } else if (outcome === "tied") {
+          controls = '<div class="actions" style="margin-top:10px">' +
+            '<button class="btn secondary" onclick="decideTrade(' + i + ",'approved')\">Commissioner: approve</button>" +
+            '<button class="btn secondary" onclick="decideTrade(' + i + ",'rejected')\">Commissioner: reject</button></div>";
+        }
+
+        return '<div class="card" style="margin-bottom:10px"><div class="row"><b>' +
+          ffEsc(teams[t.a].name) + " ↔ " + ffEsc(teams[t.b].name) + '</b><span class="pill ' + status[1] + '">' +
+          ffEsc(status[0]) +
