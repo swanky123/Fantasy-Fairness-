@@ -1,1183 +1,611 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Fantasy Fairness — League HQ</title>
-<meta name="description" content="Fantasy football leagues built on transparent rules: owner-voted trades, written integrity reviews, and a permanent audit log.">
-<meta property="og:title" content="Fantasy Fairness"><meta property="og:description" content="A better league starts with fair rules.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏈%3C/text%3E%3C/svg%3E">
-<style>
-:root{--bg:#0b1220;--panel:#121d30;--panel2:#17253b;--line:#263750;--text:#edf4ff;--muted:#9aabc3;--green:#8be28b;--lime:#b6f36a;--red:#ff8585;--gold:#ffd479}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% -10%,#1e3d50 0,transparent 34%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
-header{display:flex;align-items:center;justify-content:space-between;padding:18px 5%;border-bottom:1px solid var(--line);background:#0b1220dd;position:sticky;top:0;z-index:2;backdrop-filter:blur(12px)}
-.brand{font-weight:900;letter-spacing:.4px;font-size:21px}.brand span{color:var(--lime)}.tag{color:var(--muted);font-size:12px}
-nav{display:flex;gap:8px;flex-wrap:wrap}.nav{background:transparent;border:1px solid transparent;color:var(--muted);padding:9px 12px;border-radius:9px;cursor:pointer}.nav.active,.nav:hover{background:var(--panel2);border-color:var(--line);color:var(--text)}
-main{max-width:1180px;margin:28px auto;padding:0 20px}.hero{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:22px}.eyebrow{color:var(--lime);font-size:11px;font-weight:800;letter-spacing:1.7px;text-transform:uppercase}h1{font-size:clamp(27px,4vw,40px);margin:5px 0}.muted{color:var(--muted)}.btn{background:var(--lime);color:#15210e;border:0;border-radius:9px;padding:10px 14px;font-weight:800;cursor:pointer}.btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}.btn.danger{background:#542d36;color:#ffdce1}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.card{background:linear-gradient(160deg,var(--panel),#101a2b);border:1px solid var(--line);border-radius:15px;padding:17px;min-width:0}.span3{grid-column:span 3}.span4{grid-column:span 4}.span5{grid-column:span 5}.span6{grid-column:span 6}.span7{grid-column:span 7}.span8{grid-column:span 8}.span12{grid-column:span 12}.stat{font-size:28px;font-weight:850;margin:5px 0}.card h3{margin:0 0 12px;font-size:16px}.pill{display:inline-block;border:1px solid var(--line);background:var(--panel2);border-radius:99px;padding:3px 8px;font-size:11px;color:var(--muted)}.good{color:var(--green)}.warn{color:var(--gold)}.bad{color:var(--red)}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 7px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted);font-weight:650}tr:last-child td{border:0}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.team{display:flex;align-items:center;gap:9px}.avatar{width:30px;height:30px;border-radius:9px;background:#263b50;display:grid;place-items:center;font-weight:800;color:var(--lime)}.bar{height:7px;background:#263750;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--lime);width:75%}.directory-list{display:grid;gap:10px}.directory-card{background:#0d1828;border:1px solid var(--line);border-radius:11px;padding:13px}.directory-card h4{margin:0 0 7px;font-size:15px}.directory-meta{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.directory-meta .pill{margin:0}.section{display:none}.section.active{display:block}.field{display:grid;gap:5px;margin:10px 0}.field label{font-size:12px;color:var(--muted)}input,select,textarea{background:#0b1423;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;width:100%}.notice{border-left:3px solid var(--gold);padding:10px 12px;background:#302a1d55;border-radius:7px;color:#e8d8b5;font-size:13px}.playerlist{max-height:370px;overflow:auto}.player{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);gap:10px}.player:last-child{border:0}.small{font-size:12px;color:var(--muted)}.actions{display:flex;gap:7px;flex-wrap:wrap}.empty{color:var(--muted);padding:15px 0}.footer{margin:30px 0;color:var(--muted);font-size:12px;text-align:center}
-@media(max-width:760px){header{align-items:flex-start;flex-direction:column;gap:12px}.span3,.span4,.span5,.span6,.span7,.span8{grid-column:span 12}.hero{align-items:flex-start;flex-direction:column}nav{width:100%}}
-</style>
-</head>
-<body>
-<header><div><div class="brand">FANTASY <span>FAIRNESS</span></div><div class="tag">A better league starts with fair rules.</div></div>
-<nav>
-<button class="nav active" data-tab="dashboard">Dashboard</button>
-<button class="nav" data-tab="leagues">Leagues</button>
-<button class="nav" data-tab="join">Join a League</button>
-<button class="nav" data-tab="draft">Draft Room</button>
-<button class="nav" data-tab="teams">Teams</button>
-<button class="nav" data-tab="trades">Trade Review</button>
-<button class="nav" data-tab="integrity">Integrity</button>
-<button class="nav" data-tab="settings">Settings</button>
-</nav>
-</header>
-<div class="notice" style="margin:0;border-radius:0;text-align:center">Preview release — leagues, drafts, votes and reports are saved in <b>this browser only</b> and are not shared with other people yet.</div>
-<main>
-<section id="dashboard" class="section active">
-<div class="hero"><div><div class="eyebrow">2027 season workspace · public leagues</div><h1>League HQ</h1><div class="muted">12-team · Full PPR · Snake draft</div></div><button class="btn" onclick="switchTab('draft')">Open draft room →</button></div>
-<div class="grid">
-<div class="card span3"><div class="muted">League members</div><div class="stat">12 / 12</div><span class="pill good">League capacity</span></div>
-<div class="card span3"><div class="muted">Scoring format</div><div class="stat">PPR</div><span class="pill">1 point per reception</span></div>
-<div class="card span3"><div class="muted">Draft format</div><div class="stat">Snake</div><span class="pill">12 rounds demo</span></div>
-<div class="card span3"><div class="muted">Integrity status</div><div class="stat good">Active</div><span class="pill">Audit log enabled</span></div>
-<div class="card span7"><h3>League standings</h3><table><thead><tr><th>Rank</th><th>Team</th><th>W-L</th><th>Points</th></tr></thead><tbody id="standings"></tbody></table><div class="small">Sample preseason standings — live standings begin when a season data feed is connected.</div></div>
-<div class="card span5"><h3>Fairness checklist</h3><div id="checklist"></div></div>
-<div class="card span12"><h3>League activity</h3><div id="activity" class="small"></div></div>
-</div>
-</section>
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let value = "";
+  let quoted = false;
 
-<section id="leagues" class="section">
-<div class="hero"><div><div class="eyebrow">League management</div><h1>Public leagues</h1><div class="muted">Create or join a fantasy league.</div></div></div>
-<div class="grid">
-<div class="card span5">
-<h3>Create a league</h3>
-<div class="field"><label>League name</label><input id="newLeagueName" placeholder="Enter league name"></div>
-<div class="field"><label>Number of teams</label><select id="newLeagueTeams"><option value="12">12 teams</option><option value="10">10 teams</option><option value="8">8 teams</option></select></div>
-<div class="field"><label>Scoring</label><select id="newLeagueScoring"><option>Full PPR</option><option>Half PPR</option><option>Standard</option></select></div>
-<div class="field"><label>Draft Type</label><select id="draftType"><option value="Snake">Snake Draft</option><option value="Linear">Linear Draft</option></select></div>
-<div class="field"><label>League Access</label><select id="leagueAccess"><option value="Public">Public</option><option value="Private">Private</option></select></div>
-<button class="btn" onclick="createLeague()">Create League</button>
-</div>
-<div class="card span7"><h3>League directory</h3><div id="leagueDirectory">No leagues created yet.</div></div>
-</div>
-</section>
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
 
-<section id="join" class="section">
-<div class="hero"><div><div class="eyebrow">Find your next league</div><h1>Join a League</h1><div class="muted">Browse public leagues or enter an invitation League ID.</div></div></div>
-<div class="grid">
-<div class="card span5">
-<h3>Find a league by ID</h3>
-<div class="field"><label>League ID</label><input id="joinLeagueCode" placeholder="Example: FF-123456" maxlength="20"></div>
-<button class="btn" onclick="findLeagueByCode()">Find League</button>
-<div id="joinLeagueResult" style="margin-top:15px"></div>
-</div>
-<div class="card span7">
-<div class="row"><h3>Public league directory</h3><button class="btn secondary" onclick="renderPublicLeagues()">Refresh</button></div>
-<div class="field"><label>Search public leagues</label><input id="publicLeagueSearch" placeholder="Search by league name or scoring..." oninput="renderPublicLeagues()"></div>
-<div id="publicLeagueDirectory" class="directory-list"><div class="empty">No public leagues are available in this browser yet.</div></div>
-</div>
-</div>
-<div class="notice" style="margin-top:15px">Prototype note: this directory currently shows leagues saved in this browser. Shared leagues across different users and devices require a shared online database, which has not been connected yet.</div>
-</section>
-
-<section id="draft" class="section">
-<div class="hero"><div><div class="eyebrow">Draft room</div><h1>Build your roster</h1><div class="muted">Demo draft board · 12 teams · snake order</div></div><span class="pill warn" id="pickStatus">Pick 1 of 144</span></div>
-<div class="grid">
-<div class="card span8"><div class="row"><h3>Available player pool</h3><span class="pill">Sample players</span></div><div class="field">
-  <label>Search Players</label>
-<div class="field">
-  <label>Search Players</label>
-  <input id="playerSearch" placeholder="Search players, teams, or positions…" oninput="renderPlayers()">
-</div>
-
-<div class="field">
-  <label>Filter by Position</label>
-  <select id="posFilter" onchange="renderPlayers()">
-    <option value="">All Positions</option>
-    <option value="QB">Quarterbacks</option>
-    <option value="RB">Running Backs</option>
-    <option value="WR">Wide Receivers</option>
-    <option value="TE">Tight Ends</option>
-    <option value="K">Kickers</option>
-    <option value="D/ST">Team Defense</option>
-  </select>
-</div>
-
-<div class="row">
-  <span id="poolSource" class="pill warn">Loading NFL player database...</span>
-  <span id="poolCount" class="small">Loading players...</span>
-</div>
-</div>
-
-<div class="field">
-  <label>Filter by Position</label>
-  <select id="posFilter" onchange="renderPlayers()">
-    <option value="">All Positions</option>
-    <option value="QB">Quarterbacks</option>
-    <option value="RB">Running Backs</option>
-    <option value="WR">Wide Receivers</option>
-    <option value="TE">Tight Ends</option>
-    <option value="K">Kickers</option>
-    <option value="D/ST">Team Defense</option>
-  </select>
-</div>
-
-<div class="row">
-  <span id="poolSource" class="pill warn">Loading NFL player database...</span>
-  <span id="poolCount" class="small">Loading players...</span>
-</div><div class="playerlist" id="players"></div></div>
-<div class="card span4"><h3>On the clock</h3><div class="stat" id="onClock">Team 1</div><div class="muted small" id="pickNumber">Overall pick 1 · Round 1</div><div class="notice" style="margin:14px 0">This is a local draft-room prototype. Picks are saved in this browser only.</div><h3>Recent picks</h3><div id="recentPicks" class="small">No picks yet.</div><button class="btn secondary" style="margin-top:14px" onclick="undoPick()">Undo last pick</button></div>
-<div class="card span12"><h3>Draft board</h3><div id="draftBoard" class="small"></div></div>
-</div>
-</section>
-
-<section id="teams" class="section"><div class="hero"><div><div class="eyebrow">League directory</div><h1>Teams & rosters</h1><div class="muted">12 team slots are ready for owners.</div></div></div><div class="grid" id="teamCards"></div></section>
-
-<section id="trades" class="section">
-<div class="hero"><div><div class="eyebrow">League governance</div><h1>Trade review center</h1><div class="muted">Transparent review, owner voting, and a permanent decision record.</div></div></div>
-<div class="grid">
-<div class="card span5"><h3>Submit a trade for review</h3><div class="field"><label>Team A</label><select id="tradeA"></select></div><div class="field"><label>Team B</label><select id="tradeB"></select></div><div class="field"><label>Assets Team A sends</label><input id="sendA" placeholder="Player names / picks"></div><div class="field"><label>Assets Team B sends</label><input id="sendB" placeholder="Player names / picks"></div><div class="field"><label>Reason / context (optional)</label><textarea id="tradeReason" rows="2"></textarea></div><button class="btn" onclick="submitTrade()">Submit for review</button></div>
-<div class="card span7"><h3>Trade queue & votes</h3><div id="tradeList" class="small empty">No trades submitted yet.</div></div>
-</div>
-</section>
-
-<section id="integrity" class="section">
-<div class="hero"><div><div class="eyebrow">Trust & transparency</div><h1>Integrity center</h1><div class="muted">Report concerns and preserve a clear record of league decisions.</div></div></div>
-<div class="grid">
-<div class="card span5"><h3>File an integrity report</h3><div class="field"><label>Concern type</label><select id="reportType"><option>Possible collusion</option><option>Roster dumping / tanking</option><option>Unauthorized account access</option><option>Rule violation</option><option>Commissioner conduct</option><option>Other</option></select></div><div class="field"><label>Teams involved (if known)</label><input id="reportTeams" placeholder="Team names"></div><div class="field"><label>What happened?</label><textarea id="reportDetails" rows="4" placeholder="Describe observable facts, dates, and evidence."></textarea></div><button class="btn" onclick="fileReport()">File report</button></div>
-<div class="card span7"><h3>Integrity reports</h3><div id="reports" class="small empty">No reports filed. Reports are allegations, not findings.</div><div class="notice" style="margin-top:15px">Fair process: restrict access to reviewers, allow a response from involved owners, require documented evidence, and record a reasoned decision. Never auto-punish based on an algorithmic flag.</div></div>
-<div class="card span12"><h3>Audit log</h3><div id="audit" class="small">No administrative actions yet.</div></div>
-</div>
-</section>
-
-<section id="settings" class="section">
-<div class="hero"><div><div class="eyebrow">League configuration</div><h1>Settings</h1><div class="muted">Core league rules for Fantasy Fairness.</div></div></div>
-<div class="grid">
-<div class="card span6"><h3>League basics</h3><div class="field"><label>League name</label><input value="Fantasy Fairness"></div><div class="field"><label>Teams</label><input value="12 teams" disabled></div><div class="field"><label>Scoring</label><input value="Full PPR" disabled></div><div class="field"><label>Draft</label><input value="Snake draft" disabled></div><div class="field"><label>Visibility</label><input value="Public league directory" disabled></div></div>
-<div class="card span6"><h3>Default scoring preview</h3><table><tr><td>Reception</td><td>1.0</td></tr><tr><td>Passing yards</td><td>0.04 / yard</td></tr><tr><td>Passing TD</td><td>4</td></tr><tr><td>Rushing / receiving yards</td><td>0.1 / yard</td></tr><tr><td>Rushing / receiving TD</td><td>6</td></tr><tr><td>Interception thrown</td><td>-2</td></tr><tr><td>Fumble lost</td><td>-2</td></tr></table><p class="small">Illustrative defaults. Final scoring, roster slots, waiver priority, playoff format, and tie-breakers must be approved before launch.</p></div>
-<div class="card span12">
-<div class="card span12">
-<h3>The Chosen One</h3>
-
-  <div class="notice">
-    Only the League Manager can change league rules and settings.
-  </div>
-
-  <div class="field">
-    <label>League Manager Name</label>
-    <input
-      type="text"
-      id="leagueManagerName"
-      placeholder="Enter manager name"
-    >
-  </div>
-
-  <div class="field">
-    <label>Who Can Change League Settings?</label>
-    <select id="managerPermissions">
-      <option value="manager-only">
-        Only the League Manager
-      </option>
-      <option value="all-owners">
-        All League Owners
-      </option>
-    </select>
-  </div>
-
-  <button class="btn" onclick="saveManagerPermissions()">
-    Save Manager Permissions
-  </button>
-
-  <p id="managerSaveStatus" class="small">
-    Manager permissions have not been saved yet.
-  </p>
-</div>
-  <h3>Waiver Rules & Tiebreakers</h3>
-
-  <div class="field">
-    <label>Waiver System</label>
-    <select id="waiverType">
-      <option value="Rolling">Rolling Waivers</option>
-      <option value="FAAB">FAAB (Free Agent Budget)</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Waiver Priority</label>
-    <select id="waiverPriority">
-      <option value="Reverse Standings">Reverse Standings (Lowest ranked team first)</option>
-      <option value="Rolling Priority">Rolling Priority (Successful claim moves team to bottom)</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Waiver Processing Time</label>
-    <select id="waiverTime">
-      <option value="Daily at 3 AM">Daily at 3 AM</option>
-      <option value="Daily at 10 AM">Daily at 10 AM</option>
-      <option value="Twice Weekly">Twice Weekly</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>First Tiebreaker</label>
-    <select id="tieBreaker">
-      <option value="Head-to-Head Record">Head-to-Head Record</option>
-      <option value="Points For">Most Points For</option>
-      <option value="Division Record">Division Record</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Second Tiebreaker</label>
-    <select id="tieBreaker2">
-      <option value="Points For">Most Points For</option>
-      <option value="Head-to-Head Record">Head-to-Head Record</option>
-      <option value="Division Record">Division Record</option>
-    </select>
-  </div>
-
-  <button class="btn" onclick="saveWaiverRules()">Save Waiver Rules</button>
-  <p id="waiverSaveStatus" class="small">Rules have not been saved yet.</p>
-</div>
-  <div class="card span12"><h3>Before public launch</h3><div class="notice">This prototype does not yet have secure user accounts, shared cloud storage, a live NFL statistics feed, payments, email verification, or production-grade league isolation. Do not enter passwords or private personal information here.</div></div>
-  <div class="card span6"><h3>Your data</h3><p class="small">Everything in this preview is stored in this browser only. Clearing it removes your leagues, draft, trades, reports and settings on this device.</p><button class="btn danger" onclick="clearAllData()">Clear my data</button></div>
-  <div class="card span6"><h3>About this release</h3><div class="notice">Preview release. There are no accounts yet, so leagues, drafts and votes are not shared between people or devices. Do not enter passwords or private information.</div></div>
-</div>
-</section>
-
-<div class="footer">Fantasy Fairness · Interactive MVP prototype · Demo data only</div>
-</main>
-
-<script>
-const teams=Array.from({length:12},(_,i)=>({name:`Team ${i+1}`,wins:0,losses:0,points:0,roster:[]}));
-const pool=[
-["Josh Allen","QB","BUF"],["Lamar Jackson","QB","BAL"],["Jalen Hurts","QB","PHI"],["Patrick Mahomes","QB","KC"],["Joe Burrow","QB","CIN"],["Jayden Daniels","QB","WAS"],
-["Christian McCaffrey","RB","SF"],["Bijan Robinson","RB","ATL"],["Jahmyr Gibbs","RB","DET"],["Saquon Barkley","RB","PHI"],["Jonathan Taylor","RB","IND"],["Derrick Henry","RB","BAL"],["Breece Hall","RB","NYJ"],["De'Von Achane","RB","MIA"],
-["Ja'Marr Chase","WR","CIN"],["Justin Jefferson","WR","MIN"],["CeeDee Lamb","WR","DAL"],["Amon-Ra St. Brown","WR","DET"],["Tyreek Hill","WR","MIA"],["Puka Nacua","WR","LAR"],["A.J. Brown","WR","PHI"],["Malik Nabers","WR","NYG"],["Drake London","WR","ATL"],["Garrett Wilson","WR","NYJ"],
-["Travis Kelce","TE","KC"],["Sam LaPorta","TE","DET"],["Trey McBride","TE","ARI"],["Mark Andrews","TE","BAL"],
-["Harrison Butker","K","KC"],["Justin Tucker","K","BAL"],["49ers D/ST","DST","SF"],["Ravens D/ST","DST","BAL"]];
-let picks=[],trades=[],reports=[],audit=[];
-
-function switchTab(id){document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));}
-document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
-function snakeTeam(p){let round=Math.floor(p/12),slot=p%12;return round%2===0?slot:11-slot}
-function saveWaiverRules() {
-  const rules = {
-    waiverType: document.getElementById("waiverType").value,
-    waiverPriority: document.getElementById("waiverPriority").value,
-    waiverTime: document.getElementById("waiverTime").value,
-    tieBreaker: document.getElementById("tieBreaker").value,
-    tieBreaker2: document.getElementById("tieBreaker2").value
-  };
-
-  if (rules.tieBreaker === rules.tieBreaker2) {
-    alert("Please choose two different tiebreakers.");
-    return;
-  }
-
-  localStorage.setItem("fantasyFairnessWaiverRules", JSON.stringify(rules));
-
-  document.getElementById("waiverSaveStatus").textContent =
-    "Waiver rules saved successfully!";
-
-  const checklist = document.getElementById("checklist");
-  if (checklist) {
-    const statuses = checklist.querySelectorAll(".pill");
-    if (statuses[3]) {
-      statuses[3].textContent = "Configured";
-      statuses[3].className = "pill good";
-    }
-  }
-
-  alert("Your waiver rules have been saved!");
-}
-function saveManagerPermissions() {
-  const managerName = document
-    .getElementById("leagueManagerName")
-    .value.trim();
-
-  const permissions = document
-    .getElementById("managerPermissions")
-    .value;
-
-  if (!managerName) {
-    alert("Please enter the League Manager's name.");
-    return;
-  }
-
-  const managerSettings = {
-    managerName: managerName,
-    permissions: permissions
-  };
-
-  localStorage.setItem(
-    "fantasyFairnessManager",
-    JSON.stringify(managerSettings)
-  );
-
-  document.getElementById("managerSaveStatus").textContent =
-    "League Manager settings saved for " + managerName + ".";
-
-  alert("League Manager settings saved!");
-}
-  function renderDashboard(){document.getElementById('standings').innerHTML=teams.map((t,i)=>`<tr><td>${i+1}</td><td>${t.name}</td><td>0-0</td><td>—</td></tr>`).join('');document.getElementById('checklist').innerHTML=['Rules approved by all owners','Commissioner actions logged','Trade review process published','Waiver and tie-break rules set','NFL data provider connected'].map((x,i)=>`<div class="row" style="padding:7px 0"><span>${x}</span><span class="pill ${i<3?'good':'warn'}">${i<3?'Ready':'Pending'}</span></div>`).join('');document.getElementById('activity').innerHTML=activity.length?activity.slice().reverse().map(x=>`<div style="padding:5px 0">${x}</div>`).join(''):'No activity yet. Draft picks, reports, and trade submissions will appear here.'}
-let activity=[];
-
-let leagues = JSON.parse(localStorage.getItem("fantasyFairnessLeagues") || "[]");
-
-function saveLeagues() {
-  localStorage.setItem("fantasyFairnessLeagues", JSON.stringify(leagues));
-}
-
-function escapeLeagueText(value) {
-  const div = document.createElement("div");
-  div.textContent = value;
-  return div.innerHTML;
-}
-
-function renderLeagues() {
-  const directory = document.getElementById("leagueDirectory");
-
-  directory.innerHTML = leagues.length
-    ? leagues.map(league => {
-        const members = Number(league.members || 0);
-        const full = members >= Number(league.teams);
-        let joinButton = "";
-
-        if (league.joined) {
-          joinButton = '<button class="btn secondary" disabled>Joined</button>';
-        } else if (full) {
-          joinButton = '<button class="btn secondary" disabled>League Full</button>';
-        } else {
-          joinButton = `<button class="btn" onclick="joinLeague(${league.id})">Join League</button>`;
-        }
-
-        return `
-          <div class="card" style="margin:10px 0">
-            <h3>${escapeLeagueText(league.name)}</h3>
-            <p>League ID: ${escapeLeagueText(league.code || "Pending")}</p>
-            <p>${league.teams} teams · ${escapeLeagueText(league.scoring)}</p>
-            <p>Draft: ${escapeLeagueText(league.draft || "Snake")}</p>
-            <p>Members: ${members}/${league.teams}</p>
-            <span class="pill good">${escapeLeagueText(league.access || "Public")}</span>
-            <div style="margin-top:12px">${joinButton}</div>
-          </div>
-        `;
-      }).join("")
-    : "No leagues created yet.";
-}
-
-function joinLeague(id) {
-  const league = leagues.find(league => league.id === id);
-  if (!league) return;
-
-  if (league.joined) {
-    alert("You have already joined this league.");
-    return;
-  }
-
-  const members = Number(league.members || 0);
-  if (members >= Number(league.teams)) {
-    alert("This league is full.");
-    return;
-  }
-
-  league.members = members + 1;
-  league.joined = true;
-
-  saveLeagues();
-  renderLeagues();
-  renderPublicLeagues();
-
-  const result = document.getElementById("joinLeagueResult");
-  if (result.innerHTML.trim()) findLeagueByCode();
-
-  alert("You successfully joined the league!");
-}
-
-function renderPublicLeagues() {
-  const directory = document.getElementById("publicLeagueDirectory");
-  if (!directory) return;
-
-  const searchInput = document.getElementById("publicLeagueSearch");
-  const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
-
-  const publicLeagues = leagues.filter(league =>
-    String(league.access || "Public").toLowerCase() === "public"
-  ).filter(league => {
-    const searchable = [
-      league.name || "", league.code || "",
-      league.scoring || "", league.draft || ""
-    ].join(" ").toLowerCase();
-    return searchable.includes(query);
-  });
-
-  if (!publicLeagues.length) {
-    directory.innerHTML = leagues.some(league =>
-      String(league.access || "Public").toLowerCase() === "public"
-    )
-      ? '<div class="empty">No public leagues match your search.</div>'
-      : '<div class="empty">No public leagues are available in this browser yet. Create a public league in the Leagues tab first.</div>';
-    return;
-  }
-
-  directory.innerHTML = publicLeagues.map(league => {
-    const members = Number(league.members || 0);
-    const capacity = Number(league.teams || 12);
-    const full = members >= capacity;
-    let joinButton = "";
-
-    if (league.joined) {
-      joinButton = '<button class="btn secondary" disabled>Already Joined</button>';
-    } else if (full) {
-      joinButton = '<button class="btn secondary" disabled>League Full</button>';
+    if (char === '"' && quoted && text[i + 1] === '"') {
+      value += '"';
+      i++;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === "," && !quoted) {
+      row.push(value);
+      value = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && text[i + 1] === "\n") i++;
+      row.push(value);
+      if (row.some(cell => cell.trim() !== "")) rows.push(row);
+      row = [];
+      value = "";
     } else {
-      joinButton = `<button class="btn" onclick="joinLeague(${Number(league.id)})">Join League</button>`;
+      value += char;
     }
-
-    return `
-      <div class="directory-card">
-        <h4>${escapeLeagueText(league.name || "Unnamed league")}</h4>
-        <div class="small">League ID: ${escapeLeagueText(league.code || "Pending")}</div>
-        <div class="directory-meta">
-          <span class="pill">${capacity} teams</span>
-          <span class="pill">${escapeLeagueText(league.scoring || "Full PPR")}</span>
-          <span class="pill">${escapeLeagueText(league.draft || "Snake")} draft</span>
-          <span class="pill">${members}/${capacity} members</span>
-        </div>
-        <div class="actions">${joinButton}</div>
-      </div>
-    `;
-  }).join("");
-}
-
-function findLeagueByCode() {
-  const code = document.getElementById("joinLeagueCode").value.trim().toUpperCase();
-  const result = document.getElementById("joinLeagueResult");
-
-  if (!code) {
-    result.innerHTML = "Please enter a League ID.";
-    return;
   }
 
-  const league = leagues.find(item =>
-    String(item.code || "").toUpperCase() === code
+  row.push(value);
+  if (row.some(cell => cell.trim() !== "")) rows.push(row);
+
+  if (!rows.length) return [];
+
+  const headers = rows.shift().map(header =>
+    header.trim().replace(/^\uFEFF/, "")
   );
 
-  if (!league) {
-    result.innerHTML = "No league with that ID was found.";
-    return;
-  }
-
-  const members = Number(league.members || 0);
-  const full = members >= Number(league.teams);
-  let button = "";
-
-  if (league.joined) {
-    button = '<button class="btn secondary" disabled>Already Joined</button>';
-  } else if (full) {
-    button = '<button class="btn secondary" disabled>League Full</button>';
-  } else {
-    button = `<button class="btn" onclick="joinLeague(${league.id})">Join League</button>`;
-  }
-
-  result.innerHTML = `
-    <div class="card" style="margin-top:12px">
-      <h3>${escapeLeagueText(league.name)}</h3>
-      <p>League ID: ${escapeLeagueText(league.code)}</p>
-      <p>${league.teams} teams · ${escapeLeagueText(league.scoring)}</p>
-      <p>Draft: ${escapeLeagueText(league.draft || "Snake")}</p>
-      <p>Members: ${members}/${league.teams}</p>
-      <span class="pill good">${escapeLeagueText(league.access || "Public")}</span>
-      <div style="margin-top:12px">${button}</div>
-    </div>
-  `;
-}
-
-function createLeague() {
-  const name = document.getElementById("newLeagueName").value.trim();
-  const teams = document.getElementById("newLeagueTeams").value;
-  const scoring = document.getElementById("newLeagueScoring").value;
-  const draft = document.getElementById("draftType").value;
-  const access = document.getElementById("leagueAccess").value;
-
-  if (!name) {
-    alert("Please enter a league name.");
-    return;
-  }
-
-  leagues.push({
-    id: Date.now(),
-    code: "FF-" + Date.now().toString().slice(-6),
-    name: name,
-    teams: teams,
-    scoring: scoring,
-    draft: draft,
-    access: access,
-    members: 0,
-    joined: false
+  return rows.map(cells => {
+    const item = {};
+    headers.forEach((header, index) => {
+      item[header] = (cells[index] || "").trim();
+    });
+    return item;
   });
-
-  saveLeagues();
-  renderLeagues();
-  renderPublicLeagues();
-  document.getElementById("newLeagueName").value = "";
-
-  alert("Your league was created successfully!");
 }
 
-function renderPlayers() {
-  let q = (document.getElementById('playerSearch').value || '').toLowerCase();
-  let drafted = picks.map(p => p.player);
-  document.getElementById('players').innerHTML = pool
-    .filter(p => !drafted.includes(p[0]) && p.join(' ').toLowerCase().includes(q))
-    .map(p => `<div class="player"><div><b>${p[0]}</b><div class="small">${p[1]} · ${p[2]}</div></div><button class="btn secondary" onclick="makePick('${p[0].replace(/'/g,"\\'")}')">Draft</button></div>`)
-    .join('') || '<div class="empty">No available players match.</div>';
+const TEAMS = [
+  ["ARI", "Arizona Cardinals"],
+  ["ATL", "Atlanta Falcons"],
+  ["BAL", "Baltimore Ravens"],
+  ["BUF", "Buffalo Bills"],
+  ["CAR", "Carolina Panthers"],
+  ["CHI", "Chicago Bears"],
+  ["CIN", "Cincinnati Bengals"],
+  ["CLE", "Cleveland Browns"],
+  ["DAL", "Dallas Cowboys"],
+  ["DEN", "Denver Broncos"],
+  ["DET", "Detroit Lions"],
+  ["GB", "Green Bay Packers"],
+  ["HOU", "Houston Texans"],
+  ["IND", "Indianapolis Colts"],
+  ["JAX", "Jacksonville Jaguars"],
+  ["KC", "Kansas City Chiefs"],
+  ["LAC", "Los Angeles Chargers"],
+  ["LAR", "Los Angeles Rams"],
+  ["LV", "Las Vegas Raiders"],
+  ["MIA", "Miami Dolphins"],
+  ["MIN", "Minnesota Vikings"],
+  ["NE", "New England Patriots"],
+  ["NO", "New Orleans Saints"],
+  ["NYG", "New York Giants"],
+  ["NYJ", "New York Jets"],
+  ["PHI", "Philadelphia Eagles"],
+  ["PIT", "Pittsburgh Steelers"],
+  ["SEA", "Seattle Seahawks"],
+  ["SF", "San Francisco 49ers"],
+  ["TB", "Tampa Bay Buccaneers"],
+  ["TEN", "Tennessee Titans"],
+  ["WAS", "Washington Commanders"]
+];
+
+// nflverse sometimes uses older or alternate team codes
+const TEAM_FIX = { LA: "LAR", STL: "LAR", OAK: "LV", SD: "LAC", WSH: "WAS", JAC: "JAX", ARZ: "ARI", BLT: "BAL", CLV: "CLE", HST: "HOU" };
+const POSITIONS = new Set(["QB", "RB", "WR", "TE", "K", "FB"]);
+const SOURCE_URL = "https://github.com/nflverse/nflverse-data/releases/download/players/players.csv";
+const CACHE_MS = 6 * 60 * 60 * 1000;
+
+let cache = { at: 0, body: null };
+
+async function buildPayload() {
+  const response = await fetch(SOURCE_URL, { signal: AbortSignal.timeout(20000) });
+  if (!response.ok) throw new Error("NFL player data source returned " + response.status);
+
+  const records = parseCSV(await response.text());
+  const now = new Date();
+  const season = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
+  const seen = new Set();
+
+  const players = [];
+  for (const p of records) {
+    const position = p.position === "FB" ? "RB" : p.position; // FBs draft as RBs
+    const team = (TEAM_FIX[p.latest_team] || p.latest_team || p.team || "").toUpperCase();
+    const id = p.gsis_id || (p.espn_id ? "espn-" + p.espn_id : "");
+    const name = p.display_name || [p.first_name, p.last_name].filter(Boolean).join(" ");
+    const lastSeason = Number(p.last_season || 0);
+
+    if (!id || !name || !POSITIONS.has(p.position) || !team) continue;
+    if (p.status === "RET") continue;                // retired
+    if (lastSeason && lastSeason < season - 1) continue; // not seen recently
+    if (seen.has(id)) continue;
+    seen.add(id);
+
+    players.push({
+      id, name, position, team,
+      status: p.status || "Unknown",
+      headshot: p.headshot || p.headshot_url || "",
+      type: "player"
+    });
+  }
+
+  const defenses = TEAMS.map(([code, name]) => ({
+    id: "DST-" + code, name: name + " Defense", position: "D/ST",
+    team: code, teamName: name, status: "Active", headshot: "", type: "defense"
+  }));
+
+  const all = [...players, ...defenses];
+  return {
+    success: true, source: "nflverse", updatedAt: now.toISOString(),
+    totalPlayers: all.length, playerCount: players.length, defenseCount: defenses.length,
+    players: all
+  };
 }
 
-function makePick(name) {
-  if (picks.length >= 144) return alert('Demo draft is complete.');
-  if (picks.some(p => p.player === name)) return;
+module.exports = async function (req, res) {
+  res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
+  res.setHeader("Access-Control-Allow-Origin", "*");
 
-  let ti = snakeTeam(picks.length);
-  let round = Math.floor(picks.length / 12) + 1;
-  let overall = picks.length + 1;
-  let t = teams[ti];
+  try {
+    if (!cache.body || Date.now() - cache.at > CACHE_MS) {
+      cache = { at: Date.now(), body: await buildPayload() };
+    }
+    res.status(200).json(cache.body);
+  } catch (error) {
+    // Serve stale data if we have it rather than breaking the draft room
+    if (cache.body) return res.status(200).json({ ...cache.body, stale: true });
+    res.status(500).json({ success: false, message: "Unable to import NFL players right now.", error: error.message });
+  }
+};
 
-  t.roster.push(name);
-  picks.push({team:ti,player:name,round,overall});
-  audit.push(`Pick ${overall}: ${t.name} drafted ${name}`);
-  activity.push(`Draft: ${t.name} selected ${name} (#${overall})`);
-
-  renderDraft();
-  renderDashboard();
-  renderTeams();
-}
-
-function undoPick() {
-  let p = picks.pop();
-  if (!p) return;
-  teams[p.team].roster = teams[p.team].roster.filter(x => x !== p.player);
-  audit.push(`Commissioner undid pick ${p.overall} (${p.player})`);
-  renderDraft();
-  renderDashboard();
-  renderTeams();
-}
-
-function renderDraft() {
-  let n = picks.length;
-  let ti = snakeTeam(n);
-
-  document.getElementById('pickStatus').textContent = `Pick ${Math.min(n+1,144)} of 144`;
-  document.getElementById('onClock').textContent = n >= 144 ? 'Draft complete' : teams[ti].name;
-  document.getElementById('pickNumber').textContent = n >= 144 ? 'All demo picks made' : `Overall pick ${n+1} · Round ${Math.floor(n/12)+1}`;
-  document.getElementById('recentPicks').innerHTML = picks.slice(-8).reverse().map(p => `#${p.overall} ${teams[p.team].name}: ${p.player}`).join('<br>') || 'No picks yet.';
-  document.getElementById('draftBoard').innerHTML = picks.length ? picks.map(p => `<span class="pill" style="margin:3px">#${p.overall} ${teams[p.team].name}: ${p.player}</span>`).join('') : 'Draft board is empty.';
-
-  renderPlayers();
-}
-
-function renderTeams() {
-  document.getElementById('teamCards').innerHTML = teams.map((t,i) =>
-    `<div class="card span3"><div class="team"><div class="avatar">${i+1}</div><b>${t.name}</b></div><div class="stat">${t.roster.length}</div><div class="small">Players drafted</div><div style="margin-top:10px">${t.roster.map(x => `<div class="small" style="padding:4px 0;border-bottom:1px solid var(--line)">${x}</div>`).join('') || '<span class="small">Roster empty</span>'}</div></div>`
-  ).join('');
-}
-
-function initTradeTeams() {
-  ['tradeA','tradeB'].forEach(id =>
-    document.getElementById(id).innerHTML = teams.map((t,i) => `<option value="${i}">${t.name}</option>`).join('')
-  );
-}
-
-function submitTrade() {
-  let a = +document.getElementById('tradeA').value;
-  let b = +document.getElementById('tradeB').value;
-  if (a === b) return alert('Choose two different teams.');
-
-  let sa = document.getElementById('sendA').value.trim();
-  let sb = document.getElementById('sendB').value.trim();
-  if (!sa || !sb) return alert('Enter assets from both teams.');
-
-  trades.push({a,b,sa,sb,reason:document.getElementById('tradeReason').value,status:'Under review',votes:0});
-  audit.push(`Trade submitted: ${teams[a].name} ↔ ${teams[b].name}`);
-  activity.push(`Trade review submitted: ${teams[a].name} and ${teams[b].name}`);
-
-  renderTrades();
-  renderAudit();
-  renderDashboard();
-}
-
-function voteTrade(i,decision) {
-  let t = trades[i];
-  t.votes++;
-  t.status = t.votes >= 3 ? 'Review threshold reached — commissioner decision required' : 'Under review';
-  audit.push(`League member cast a ${decision} vote on trade ${i+1}`);
-  renderTrades();
-  renderAudit();
-}
-
-function renderTrades() {
-  document.getElementById('tradeList').innerHTML = trades.length
-    ? trades.map((t,i) => `<div class="card" style="margin-bottom:10px"><div class="row"><b>${teams[t.a].name} ↔ ${teams[t.b].name}</b><span class="pill warn">${t.status}</span></div><p>${teams[t.a].name} sends: ${t.sa}<br>${teams[t.b].name} sends: ${t.sb}</p><div class="small">${t.reason || 'No context supplied'} · ${t.votes} demo votes</div><div class="actions" style="margin-top:10px"><button class="btn secondary" onclick="voteTrade(${i},'approve')">Approve</button><button class="btn secondary" onclick="voteTrade(${i},'reject')">Reject</button></div></div>`).join('')
-    : 'No trades submitted yet.';
-}
-
-function fileReport() {
-  let type = document.getElementById('reportType').value;
-  let who = document.getElementById('reportTeams').value;
-  let details = document.getElementById('reportDetails').value.trim();
-
-  if (!details) return alert('Describe the concern before filing.');
-
-  reports.push({type,who,details,status:'Submitted — not yet investigated'});
-  audit.push(`Integrity report filed: ${type}`);
-  activity.push(`Integrity report filed: ${type}`);
-
-  document.getElementById('reportTeams').value = '';
-  document.getElementById('reportDetails').value = '';
-
-  renderReports();
-  renderAudit();
-  renderDashboard();
-}
-
-function renderReports() {
-  document.getElementById('reports').innerHTML = reports.length
-    ? reports.map((r,i) => `<div class="card" style="margin-bottom:10px"><div class="row"><b>${r.type}</b><span class="pill warn">${r.status}</span></div><div class="small">${r.who || 'Teams not specified'}</div><p>${r.details}</p><div class="actions"><button class="btn secondary" onclick="resolveReport(${i})">Mark reviewed</button></div></div>`).join('')
-    : 'No reports filed. Reports are allegations, not findings.';
-}
-
-function resolveReport(i) {
-  reports[i].status = 'Reviewed — decision must be documented by league officers';
-  audit.push(`Report ${i+1} marked reviewed; rationale still required`);
-  renderReports();
-  renderAudit();
-}
-
-function renderAudit() {
-  document.getElementById('audit').innerHTML = audit.length
-    ? audit.slice().reverse().map(x => `<div style="padding:5px 0;border-bottom:1px solid var(--line)">${x}</div>`).join('')
-    : 'No administrative actions yet.';
-}
-function loadWaiverRules() {
-  const saved = localStorage.getItem("fantasyFairnessWaiverRules");
-
-  if (!saved) return;
-
-  const rules = JSON.parse(saved);
-
-  document.getElementById("waiverType").value = rules.waiverType;
-  document.getElementById("waiverPriority").value = rules.waiverPriority;
-  document.getElementById("waiverTime").value = rules.waiverTime;
-  document.getElementById("tieBreaker").value = rules.tieBreaker;
-  document.getElementById("tieBreaker2").value = rules.tieBreaker2;
-
-  document.getElementById("waiverSaveStatus").textContent =
-    "Your saved waiver rules are loaded.";
-}
-renderDashboard();
-renderDraft();
-renderTeams();
-initTradeTeams();
-renderLeagues();
-renderPublicLeagues();
-</script>
-<script>
 /* =====================================================================
    LAUNCH ADDITIONS
    Everything above this block is the original code, unchanged.
-   Functions below re-declare the originals with the same names, so the
-   page uses the improved versions. Nothing was deleted.
+   The block below wraps the original data builder with retries,
+   an offline fallback, query filtering, caching headers, a health
+   check and basic abuse protection. The original handler is kept in
+   `baseHandler` and the original builder (buildPayload) is reused.
    ===================================================================== */
 
-/* ---------- helpers ---------- */
-const FF_KEY = "fantasyFairnessStateV3";
-const FF_TEAMS = 12;
-const FF_TOTAL = 144;
-
-function ffEsc(value) {
-  return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
-    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-  });
-}
-
-function ffById(id) {
-  return document.getElementById(id);
-}
-
-/* ---------- persistence (picks, trades, reports, logs survive a refresh) ---------- */
-function ffSave() {
-  try {
-    localStorage.setItem(FF_KEY, JSON.stringify({
-      picks: picks,
-      trades: trades,
-      reports: reports,
-      audit: audit,
-      activity: activity
-    }));
-  } catch (e) {
-    // storage unavailable (private mode / full) — app keeps working in memory
-  }
-}
-
-function ffLoad() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(FF_KEY) || "null");
-    if (!saved) return;
-
-    picks = Array.isArray(saved.picks) ? saved.picks : [];
-    trades = Array.isArray(saved.trades) ? saved.trades : [];
-    reports = Array.isArray(saved.reports) ? saved.reports : [];
-    audit = Array.isArray(saved.audit) ? saved.audit : [];
-    activity = Array.isArray(saved.activity) ? saved.activity : [];
-
-    teams.forEach(function (t) { t.roster = []; });
-    picks.forEach(function (p) {
-      if (teams[p.team]) teams[p.team].roster.push(p.player);
-    });
-  } catch (e) {
-    // corrupt saved data — start fresh
-  }
-}
-
-function ffLog(message, activityText) {
-  audit.push(new Date().toLocaleString() + " — " + message);
-  if (activityText) activity.push(activityText);
-  ffSave();
-}
-
-function ffRenderAll() {
-  renderDashboard();
-  renderDraft();
-  renderTeams();
-  renderTrades();
-  renderReports();
-  renderAudit();
-}
-
-/* ---------- player pool: live feed with the original list as fallback ---------- */
-let ffPool = pool.map(function (p, i) {
-  return { id: "S-" + i, name: p[0], pos: p[1] === "DST" ? "D/ST" : p[1], team: p[2], f: i };
-});
-let ffLive = false;
-
-async function ffLoadPool() {
-  const badge = ffById("poolSource");
-  try {
-    const response = await fetch("/api/players");
-    const data = await response.json();
-
-    if (!response.ok || !data.success || !data.players || !data.players.length) {
-      throw new Error(data.message || "Bad response");
-    }
-
-    const featured = new Map(pool.map(function (p, i) { return [p[0].toLowerCase(), i]; }));
-
-    ffPool = data.players
-      .filter(function (p) { return p.id && p.name; })
-      .map(function (p) {
-        const key = p.name.toLowerCase();
-        return {
-          id: String(p.id),
-          name: p.name,
-          pos: p.position,
-          team: p.team,
-          f: featured.has(key) ? featured.get(key) : 9999
-        };
-      })
-      .sort(function (a, b) { return a.f - b.f || a.name.localeCompare(b.name); });
-
-    ffLive = true;
-    if (badge) {
-      badge.textContent = "Live NFL data · " + ffPool.length + " players";
-      badge.className = "pill good";
-    }
-  } catch (e) {
-    ffLive = false;
-    if (badge) {
-      badge.textContent = "Sample players (live feed unavailable)";
-      badge.className = "pill warn";
-    }
-  }
-  renderDraft();
-  renderDashboard();
-}
-
-/* ---------- dashboard ---------- */
-function renderDashboard() {
-  ffById("standings").innerHTML = teams.map(function (t, i) {
-    return "<tr><td>" + (i + 1) + "</td><td>" + ffEsc(t.name) + "</td><td>0-0</td><td>—</td></tr>";
-  }).join("");
-
-  const items = [
-    ["League Manager assigned", !!localStorage.getItem("fantasyFairnessManager")],
-    ["Commissioner actions logged", true],
-    ["Trade review process published", true],
-    ["Waiver and tie-break rules set", !!localStorage.getItem("fantasyFairnessWaiverRules")],
-    ["NFL data provider connected", ffLive]
-  ];
-
-  ffById("checklist").innerHTML = items.map(function (item) {
-    return '<div class="row" style="padding:7px 0"><span>' + item[0] + '</span><span class="pill ' +
-      (item[1] ? "good" : "warn") + '">' + (item[1] ? "Ready" : "Pending") + "</span></div>";
-  }).join("");
-
-  ffById("activity").innerHTML = activity.length
-    ? activity.slice(-30).reverse().map(function (x) {
-        return '<div style="padding:5px 0">' + ffEsc(x) + "</div>";
-      }).join("")
-    : "No activity yet. Draft picks, reports, and trade submissions will appear here.";
-}
+const crypto = require("crypto");
 
 /* ---------- settings ---------- */
-function saveWaiverRules() {
-  const rules = {
-    waiverType: ffById("waiverType").value,
-    waiverPriority: ffById("waiverPriority").value,
-    waiverTime: ffById("waiverTime").value,
-    tieBreaker: ffById("tieBreaker").value,
-    tieBreaker2: ffById("tieBreaker2").value
-  };
+const API_VERSION = 2;
+const MAX_LIMIT = 5000;
+const RATE_LIMIT_PER_MINUTE = 120;
+const FETCH_ATTEMPTS = 3;
+const VALID_POSITIONS = ["QB", "RB", "WR", "TE", "K", "D/ST"];
 
-  if (rules.tieBreaker === rules.tieBreaker2) {
-    alert("Please choose two different tiebreakers.");
-    return;
+/* ---------- team metadata (added to every player so the app can group by division) ---------- */
+const TEAM_INFO = {
+  BUF: { conference: "AFC", division: "East" },
+  MIA: { conference: "AFC", division: "East" },
+  NE:  { conference: "AFC", division: "East" },
+  NYJ: { conference: "AFC", division: "East" },
+  BAL: { conference: "AFC", division: "North" },
+  CIN: { conference: "AFC", division: "North" },
+  CLE: { conference: "AFC", division: "North" },
+  PIT: { conference: "AFC", division: "North" },
+  HOU: { conference: "AFC", division: "South" },
+  IND: { conference: "AFC", division: "South" },
+  JAX: { conference: "AFC", division: "South" },
+  TEN: { conference: "AFC", division: "South" },
+  DEN: { conference: "AFC", division: "West" },
+  KC:  { conference: "AFC", division: "West" },
+  LAC: { conference: "AFC", division: "West" },
+  LV:  { conference: "AFC", division: "West" },
+  DAL: { conference: "NFC", division: "East" },
+  NYG: { conference: "NFC", division: "East" },
+  PHI: { conference: "NFC", division: "East" },
+  WAS: { conference: "NFC", division: "East" },
+  CHI: { conference: "NFC", division: "North" },
+  DET: { conference: "NFC", division: "North" },
+  GB:  { conference: "NFC", division: "North" },
+  MIN: { conference: "NFC", division: "North" },
+  ATL: { conference: "NFC", division: "South" },
+  CAR: { conference: "NFC", division: "South" },
+  NO:  { conference: "NFC", division: "South" },
+  TB:  { conference: "NFC", division: "South" },
+  ARI: { conference: "NFC", division: "West" },
+  LAR: { conference: "NFC", division: "West" },
+  SEA: { conference: "NFC", division: "West" },
+  SF:  { conference: "NFC", division: "West" }
+};
+
+/* ---------- offline fallback: used only if nflverse is unreachable AND nothing is cached ---------- */
+const FALLBACK_PLAYERS = [
+  ["Josh Allen", "QB", "BUF"],
+  ["Lamar Jackson", "QB", "BAL"],
+  ["Jalen Hurts", "QB", "PHI"],
+  ["Patrick Mahomes", "QB", "KC"],
+  ["Joe Burrow", "QB", "CIN"],
+  ["Jayden Daniels", "QB", "WAS"],
+  ["Christian McCaffrey", "RB", "SF"],
+  ["Bijan Robinson", "RB", "ATL"],
+  ["Jahmyr Gibbs", "RB", "DET"],
+  ["Saquon Barkley", "RB", "PHI"],
+  ["Jonathan Taylor", "RB", "IND"],
+  ["Derrick Henry", "RB", "BAL"],
+  ["Breece Hall", "RB", "NYJ"],
+  ["De'Von Achane", "RB", "MIA"],
+  ["Ja'Marr Chase", "WR", "CIN"],
+  ["Justin Jefferson", "WR", "MIN"],
+  ["CeeDee Lamb", "WR", "DAL"],
+  ["Amon-Ra St. Brown", "WR", "DET"],
+  ["Tyreek Hill", "WR", "MIA"],
+  ["Puka Nacua", "WR", "LAR"],
+  ["A.J. Brown", "WR", "PHI"],
+  ["Malik Nabers", "WR", "NYG"],
+  ["Drake London", "WR", "ATL"],
+  ["Garrett Wilson", "WR", "NYJ"],
+  ["Travis Kelce", "TE", "KC"],
+  ["Sam LaPorta", "TE", "DET"],
+  ["Trey McBride", "TE", "ARI"],
+  ["Mark Andrews", "TE", "BAL"],
+  ["Harrison Butker", "K", "KC"],
+  ["Justin Tucker", "K", "BAL"]
+];
+
+/* ---------- small helpers ---------- */
+
+/** Structured one-line logging (shows up in Vercel's function logs). */
+function log(level, message, extra) {
+  try {
+    console.log(JSON.stringify(Object.assign(
+      { level: level, message: message, at: new Date().toISOString() },
+      extra || {}
+    )));
+  } catch (e) {
+    // logging must never break a request
   }
+}
 
-  localStorage.setItem("fantasyFairnessWaiverRules", JSON.stringify(rules));
-  ffById("waiverSaveStatus").textContent = "Waiver rules saved successfully!";
+function wait(ms) {
+  return new Promise(function (resolve) { setTimeout(resolve, ms); });
+}
 
-  ffLog(
-    "Waiver rules updated (" + rules.waiverType + ", " + rules.waiverPriority + ", " +
-      rules.waiverTime + "; tiebreakers: " + rules.tieBreaker + " then " + rules.tieBreaker2 + ")",
-    "Settings: waiver rules updated"
+/** "dst", "DEF", "d/st" -> "D/ST"; returns "" when the value is not a draftable position. */
+function normalizePosition(value) {
+  const v = String(value || "").trim().toUpperCase();
+  if (v === "DST" || v === "DEF" || v === "D/ST") return "D/ST";
+  if (v === "FB") return "RB";
+  return VALID_POSITIONS.indexOf(v) >= 0 ? v : "";
+}
+
+/** "la", "WSH", "jac" -> current team code; returns "" when unknown. */
+function normalizeTeamCode(value) {
+  const v = String(value || "").trim().toUpperCase();
+  const fixed = TEAM_FIX[v] || v;
+  return TEAM_INFO[fixed] ? fixed : "";
+}
+
+/** A player is only served if it has everything the draft room needs. */
+function isValidPlayer(player) {
+  return !!(
+    player &&
+    player.id &&
+    player.name &&
+    VALID_POSITIONS.indexOf(player.position) >= 0 &&
+    TEAM_INFO[player.team]
   );
-  renderDashboard();
-  renderAudit();
-
-  alert("Your waiver rules have been saved!");
 }
 
-function saveManagerPermissions() {
-  const managerName = ffById("leagueManagerName").value.trim();
-  const permissions = ffById("managerPermissions").value;
+/* ---------- data building: retry, decorate, fallback ---------- */
 
-  if (!managerName) {
-    alert("Please enter the League Manager's name.");
-    return;
+/** Calls the original buildPayload() with backoff, so one flaky download does not fail the request. */
+async function buildPayloadWithRetry() {
+  let lastError;
+
+  for (let attempt = 1; attempt <= FETCH_ATTEMPTS; attempt++) {
+    try {
+      return await buildPayload();
+    } catch (error) {
+      lastError = error;
+      log("warn", "player source fetch failed", { attempt: attempt, message: error.message });
+      if (attempt < FETCH_ATTEMPTS) await wait(300 * attempt * attempt);
+    }
   }
 
-  localStorage.setItem("fantasyFairnessManager", JSON.stringify({
-    managerName: managerName,
-    permissions: permissions
-  }));
-
-  ffById("managerSaveStatus").textContent =
-    "League Manager settings saved for " + managerName + ".";
-
-  ffLog("League Manager set to " + managerName, "Settings: League Manager updated");
-  renderDashboard();
-  renderAudit();
-
-  alert("League Manager settings saved!");
+  throw lastError;
 }
 
-function loadSettings() {
-  loadWaiverRules(); // original function — it was defined but never called
+/** Adds conference/division, drops anything invalid, and reports how many were dropped. */
+function decoratePayload(payload) {
+  const kept = [];
+  let dropped = 0;
+
+  payload.players.forEach(function (player) {
+    if (!isValidPlayer(player)) {
+      dropped++;
+      return;
+    }
+    const info = TEAM_INFO[player.team];
+    kept.push(Object.assign({}, player, {
+      conference: info.conference,
+      division: info.division
+    }));
+  });
+
+  return Object.assign({}, payload, {
+    apiVersion: API_VERSION,
+    droppedInvalid: dropped,
+    players: kept
+  });
+}
+
+/** Small built-in list so the endpoint always returns something well-formed. */
+function buildFallbackPayload() {
+  const players = FALLBACK_PLAYERS.map(function (p, i) {
+    return {
+      id: "fallback-" + (i + 1),
+      name: p[0],
+      position: p[1],
+      team: p[2],
+      status: "Unknown",
+      headshot: "",
+      type: "player"
+    };
+  });
+
+  const defenses = TEAMS.map(function (entry) {
+    return {
+      id: "DST-" + entry[0],
+      name: entry[1] + " Defense",
+      position: "D/ST",
+      team: entry[0],
+      teamName: entry[1],
+      status: "Active",
+      headshot: "",
+      type: "defense"
+    };
+  });
+
+  const all = players.concat(defenses);
+
+  return {
+    success: false,
+    fallback: true,
+    source: "built-in-sample",
+    message: "Live NFL data is unavailable; this is a small built-in sample.",
+    updatedAt: new Date().toISOString(),
+    totalPlayers: all.length,
+    playerCount: players.length,
+    defenseCount: defenses.length,
+    players: all
+  };
+}
+
+let inflightRequest = null;
+
+// After a failed download, wait this long before trying again so a source outage
+// does not make every visitor wait through retries (and does not hammer the source).
+const FAILURE_COOLDOWN_MS = 60 * 1000;
+let lastFailureAt = 0;
+
+/**
+ * Returns { body, state } where state is one of:
+ *   fresh     - served from cache
+ *   refreshed - downloaded just now
+ *   stale     - download failed, older cached data served
+ *   fallback  - download failed and nothing cached, built-in sample served
+ * Concurrent requests share one download instead of each starting their own.
+ */
+async function getPayload() {
+  const isFresh = cache.body && Date.now() - cache.at <= CACHE_MS;
+  if (isFresh) return { body: cache.body, state: "fresh" };
+
+  const coolingDown = lastFailureAt && Date.now() - lastFailureAt < FAILURE_COOLDOWN_MS;
+  if (!inflightRequest && coolingDown) {
+    if (cache.body) return { body: cache.body, state: "stale" };
+    return { body: buildFallbackPayload(), state: "fallback" };
+  }
+
+  if (!inflightRequest) {
+    inflightRequest = buildPayloadWithRetry()
+      .then(function (body) {
+        cache = { at: Date.now(), body: body };
+        lastFailureAt = 0;
+        return body;
+      })
+      .finally(function () {
+        inflightRequest = null;
+      });
+  }
 
   try {
-    const saved = JSON.parse(localStorage.getItem("fantasyFairnessManager") || "null");
-    if (saved) {
-      ffById("leagueManagerName").value = saved.managerName || "";
-      ffById("managerPermissions").value = saved.permissions || "manager-only";
-      ffById("managerSaveStatus").textContent = "League Manager: " + (saved.managerName || "");
+    const body = await inflightRequest;
+    return { body: body, state: "refreshed" };
+  } catch (error) {
+    lastFailureAt = Date.now();
+    log("error", "serving without live data", { message: error.message, hasCache: !!cache.body });
+    if (cache.body) return { body: cache.body, state: "stale", error: error };
+    return { body: buildFallbackPayload(), state: "fallback", error: error };
+  }
+}
+
+/* ---------- query handling ---------- */
+
+/**
+ * Supported query parameters (all optional; with none, the full list is returned):
+ *   position=QB|RB|WR|TE|K|D/ST   team=KC   q=search text
+ *   limit=50   offset=100   defenses=0 (exclude D/ST)   health=1
+ */
+function parseQuery(req) {
+  let query = req.query;
+
+  if (!query || typeof query !== "object") {
+    try {
+      query = Object.fromEntries(new URL(req.url || "/", "http://localhost").searchParams);
+    } catch (e) {
+      query = {};
     }
-  } catch (e) {}
-}
-
-function clearAllData() {
-  if (!confirm("Clear ALL Fantasy Fairness data stored in this browser? This cannot be undone.")) return;
-  [FF_KEY, "fantasyFairnessLeagues", "fantasyFairnessWaiverRules", "fantasyFairnessManager"].forEach(function (k) {
-    try { localStorage.removeItem(k); } catch (e) {}
-  });
-  location.reload();
-}
-
-/* ---------- leagues: creator joins automatically, unique League IDs ---------- */
-function createLeague() {
-  const name = ffById("newLeagueName").value.trim();
-  const teamCount = Number(ffById("newLeagueTeams").value);
-  const scoring = ffById("newLeagueScoring").value;
-  const draft = ffById("draftType").value;
-  const access = ffById("leagueAccess").value;
-
-  if (!name) {
-    alert("Please enter a league name.");
-    return;
   }
 
-  if (name.length > 60) {
-    alert("League names must be 60 characters or fewer.");
-    return;
+  function pick(key) {
+    const value = query[key];
+    return Array.isArray(value) ? value[0] : value;
   }
 
-  let code;
-  do {
-    code = "FF-" + Math.floor(100000 + Math.random() * 900000);
-  } while (leagues.some(function (l) { return l.code === code; }));
+  const limitRaw = parseInt(pick("limit"), 10);
+  const offsetRaw = parseInt(pick("offset"), 10);
+  const defensesRaw = String(pick("defenses") || "").toLowerCase();
+  const healthRaw = String(pick("health") || "").toLowerCase();
 
-  leagues.push({
-    id: Date.now(),
-    code: code,
-    name: name,
-    teams: teamCount,
-    scoring: scoring,
-    draft: draft,
-    access: access,
-    members: 1,
-    joined: true
-  });
-
-  saveLeagues();
-  renderLeagues();
-  renderPublicLeagues();
-  ffById("newLeagueName").value = "";
-
-  ffLog("League created: " + name + " (" + code + ")", "League created: " + name);
-  renderDashboard();
-  renderAudit();
-
-  alert("Your league was created successfully! Share this League ID: " + code);
+  return {
+    position: normalizePosition(pick("position")),
+    team: normalizeTeamCode(pick("team")),
+    search: String(pick("q") || "").trim().toLowerCase().slice(0, 60),
+    limit: Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, MAX_LIMIT) : 0,
+    offset: Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0,
+    includeDefenses: !(defensesRaw === "0" || defensesRaw === "false"),
+    health: healthRaw === "1" || healthRaw === "true"
+  };
 }
 
-/* ---------- draft ---------- */
-function renderPlayers() {
-  const searchBox = ffById("playerSearch");
-  const posBox = ffById("posFilter");
-  const q = ((searchBox && searchBox.value) || "").toLowerCase().trim();
-  const pos = posBox ? posBox.value : "";
-  const drafted = new Set(picks.map(function (p) { return p.id || p.player; }));
+function filterPlayers(players, options) {
+  return players.filter(function (player) {
+    if (!options.includeDefenses && player.position === "D/ST") return false;
+    if (options.position && player.position !== options.position) return false;
+    if (options.team && player.team !== options.team) return false;
+    if (options.search) {
+      const haystack = (player.name + " " + player.position + " " + player.team).toLowerCase();
+      if (haystack.indexOf(options.search) < 0) return false;
+    }
+    return true;
+  });
+}
 
-  const list = ffPool.filter(function (p) {
-    if (drafted.has(p.id) || drafted.has(p.name)) return false;
-    if (pos && p.pos !== pos) return false;
-    return !q || (p.name + " " + p.pos + " " + p.team).toLowerCase().includes(q);
+function summarize(players) {
+  const byPosition = {};
+  const byTeam = {};
+
+  players.forEach(function (player) {
+    byPosition[player.position] = (byPosition[player.position] || 0) + 1;
+    byTeam[player.team] = (byTeam[player.team] || 0) + 1;
   });
 
-  const countBox = ffById("poolCount");
-  if (countBox) {
-    countBox.textContent = list.length + " available" +
-      (list.length > 100 ? " · showing first 100 — search or filter to narrow" : "");
+  return { byPosition: byPosition, byTeam: byTeam };
+}
+
+/** Weak ETag so browsers/CDNs can revalidate cheaply with If-None-Match. */
+function makeEtag(body, options, count) {
+  const hash = crypto
+    .createHash("sha1")
+    .update(JSON.stringify([body.updatedAt, body.totalPlayers, count, options]))
+    .digest("hex")
+    .slice(0, 16);
+  return 'W/"' + hash + '"';
+}
+
+function healthReport(result) {
+  const body = result.body;
+  return {
+    success: true,
+    status: result.state === "fallback" ? "degraded" : "ok",
+    state: result.state,
+    apiVersion: API_VERSION,
+    source: body.source,
+    updatedAt: body.updatedAt,
+    cacheAgeSeconds: cache.at ? Math.round((Date.now() - cache.at) / 1000) : null,
+    totalPlayers: body.totalPlayers,
+    playerCount: body.playerCount,
+    defenseCount: body.defenseCount
+  };
+}
+
+/* ---------- basic abuse protection (best-effort, per server instance) ---------- */
+const rateBuckets = new Map();
+
+function clientIp(req) {
+  const forwarded = String((req.headers && req.headers["x-forwarded-for"]) || "").split(",")[0].trim();
+  return forwarded || (req.socket && req.socket.remoteAddress) || "unknown";
+}
+
+function isRateLimited(req) {
+  const minute = Math.floor(Date.now() / 60000);
+  const ip = clientIp(req);
+  const bucket = rateBuckets.get(ip);
+
+  if (rateBuckets.size > 5000) rateBuckets.clear();
+
+  if (!bucket || bucket.minute !== minute) {
+    rateBuckets.set(ip, { minute: minute, count: 1 });
+    return false;
   }
 
-  ffById("players").innerHTML = list.slice(0, 100).map(function (p) {
-    return '<div class="player"><div><b>' + ffEsc(p.name) + '</b><div class="small">' +
-      ffEsc(p.pos) + " · " + ffEsc(p.team) + '</div></div><button class="btn secondary" data-id="' +
-      ffEsc(p.id) + '">Draft</button></div>';
-  }).join("") || '<div class="empty">No available players match.</div>';
+  bucket.count++;
+  return bucket.count > RATE_LIMIT_PER_MINUTE;
 }
 
-function makePick(id) {
-  if (picks.length >= FF_TOTAL) return alert("The draft is complete.");
+/* ---------- the improved handler ---------- */
+const baseHandler = module.exports; // the original handler, kept for reference
 
-  const player = ffPool.find(function (p) { return p.id === id; });
-  if (!player) return;
-  if (picks.some(function (p) { return p.id === id || p.player === player.name; })) return;
+module.exports = async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, If-None-Match");
 
-  const ti = snakeTeam(picks.length);
-  const round = Math.floor(picks.length / FF_TEAMS) + 1;
-  const overall = picks.length + 1;
-  const t = teams[ti];
+  if (req.method === "OPTIONS") return res.status(204).end();
 
-  if (!confirm(t.name + " drafts " + player.name + " (" + player.pos + ")?")) return;
-
-  t.roster.push(player.name);
-  picks.push({ team: ti, player: player.name, round: round, overall: overall, id: player.id, pos: player.pos });
-
-  ffLog("Pick " + overall + ": " + t.name + " drafted " + player.name,
-        "Draft: " + t.name + " selected " + player.name + " (#" + overall + ")");
-
-  renderDraft();
-  renderDashboard();
-  renderTeams();
-}
-
-function undoPick() {
-  const last = picks[picks.length - 1];
-  if (!last) return;
-  if (!confirm("Undo pick #" + last.overall + " (" + last.player + ")?")) return;
-
-  picks.pop();
-  teams[last.team].roster = teams[last.team].roster.filter(function (x) { return x !== last.player; });
-
-  ffLog("Commissioner undid pick " + last.overall + " (" + last.player + ")",
-        "Draft: pick #" + last.overall + " undone");
-
-  renderDraft();
-  renderDashboard();
-  renderTeams();
-  renderAudit();
-}
-
-function resetDraft() {
-  if (!picks.length) return;
-  if (!confirm("Reset the entire draft? All picks will be cleared (the audit log keeps a record).")) return;
-
-  picks = [];
-  teams.forEach(function (t) { t.roster = []; });
-
-  ffLog("Draft was reset", "Draft reset");
-  ffRenderAll();
-}
-
-function renderDraft() {
-  const n = picks.length;
-  const ti = snakeTeam(n);
-
-  ffById("pickStatus").textContent = "Pick " + Math.min(n + 1, FF_TOTAL) + " of " + FF_TOTAL;
-  ffById("onClock").textContent = n >= FF_TOTAL ? "Draft complete" : teams[ti].name;
-  ffById("pickNumber").textContent = n >= FF_TOTAL
-    ? "All picks made"
-    : "Overall pick " + (n + 1) + " · Round " + (Math.floor(n / FF_TEAMS) + 1);
-
-  ffById("recentPicks").innerHTML = picks.slice(-8).reverse().map(function (p) {
-    return "#" + p.overall + " " + ffEsc(teams[p.team].name) + ": " + ffEsc(p.player);
-  }).join("<br>") || "No picks yet.";
-
-  ffById("draftBoard").innerHTML = picks.length
-    ? picks.map(function (p) {
-        return '<span class="pill" style="margin:3px">#' + p.overall + " " +
-          ffEsc(teams[p.team].name) + ": " + ffEsc(p.player) + (p.pos ? " (" + ffEsc(p.pos) + ")" : "") + "</span>";
-      }).join("")
-    : "Draft board is empty.";
-
-  renderPlayers();
-}
-
-function renderTeams() {
-  ffById("teamCards").innerHTML = teams.map(function (t, i) {
-    const rows = t.roster.map(function (x) {
-      return '<div class="small" style="padding:4px 0;border-bottom:1px solid var(--line)">' + ffEsc(x) + "</div>";
-    }).join("") || '<span class="small">Roster empty</span>';
-
-    return '<div class="card span3"><div class="team"><div class="avatar">' + (i + 1) + "</div><b>" +
-      ffEsc(t.name) + '</b></div><div class="stat">' + t.roster.length +
-      '</div><div class="small">Players drafted</div><div style="margin-top:10px">' + rows + "</div></div>";
-  }).join("");
-}
-
-/* ---------- trades: one vote per team, traders recused, majority is final ---------- */
-function tradeInfo(t) {
-  const votes = t.votes && typeof t.votes === "object" ? Object.values(t.votes) : [];
-  const yes = votes.filter(function (v) { return v === "approve"; }).length;
-  const no = votes.length - yes;
-  const eligible = FF_TEAMS - 2;
-  const needed = Math.floor(eligible / 2) + 1;
-  let outcome = "open";
-
-  if (t.decision) outcome = t.decision;
-  else if (yes >= needed) outcome = "approved";
-  else if (no >= needed) outcome = "rejected";
-  else if (votes.length >= eligible) outcome = "tied";
-
-  return { yes: yes, no: no, needed: needed, outcome: outcome };
-}
-
-function tradeStatusText(t) {
-  const info = tradeInfo(t);
-  if (info.outcome === "open") {
-    return ["Voting open — " + info.yes + " approve / " + info.no + " reject (" + info.needed + " needed)", "warn"];
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    res.setHeader("Allow", "GET, HEAD, OPTIONS");
+    return res.status(405).json({ success: false, message: "Method not allowed." });
   }
-  if (info.outcome === "tied") {
-    return ["Tied " + info.yes + "–" + info.no + " — commissioner decides", "warn"];
+
+  if (isRateLimited(req)) {
+    res.setHeader("Retry-After", "60");
+    return res.status(429).json({ success: false, message: "Too many requests. Please wait a minute." });
   }
-  const how = t.decision ? "by commissioner after a tie" : "by owners";
-  return [(info.outcome === "approved" ? "Approved " : "Rejected ") + how, info.outcome === "approved" ? "good" : "bad"];
-}
 
-function submitTrade() {
-  const a = +ffById("tradeA").value;
-  const b = +ffById("tradeB").value;
-  if (a === b) return alert("Choose two different teams.");
+  try {
+    const options = parseQuery(req);
+    const result = await getPayload();
 
-  const sa = ffById("sendA").value.trim();
-  const sb = ffById("sendB").value.trim();
-  if (!sa || !sb) return alert("Enter assets from both teams.");
+    if (options.health) {
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(200).json(healthReport(result));
+    }
 
-  trades.push({ a: a, b: b, sa: sa, sb: sb, reason: ffById("tradeReason").value.trim(), votes: {} });
+    // Built-in sample: tell clients clearly that this is not live data.
+    if (result.state === "fallback") {
+      res.setHeader("Cache-Control", "no-store");
+      res.setHeader("X-Data-State", "fallback");
+      return res.status(503).json(Object.assign({}, result.body, { state: "fallback" }));
+    }
 
-  ffLog("Trade submitted: " + teams[a].name + " ↔ " + teams[b].name,
-        "Trade review submitted: " + teams[a].name + " and " + teams[b].name);
+    const payload = decoratePayload(result.body);
+    const matched = filterPlayers(payload.players, options);
+    let page = matched;
 
-  ["sendA", "sendB", "tradeReason"].forEach(function (id) { ffById(id).value = ""; });
+    if (options.offset) page = page.slice(options.offset);
+    if (options.limit) page = page.slice(0, options.limit);
 
-  renderTrades();
-  renderAudit();
-  renderDashboard();
-}
+    const etag = makeEtag(payload, options, page.length);
+    res.setHeader("ETag", etag);
+    res.setHeader("X-Data-State", result.state);
+    res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
 
-function voteTrade(i, decision) {
-  const t = trades[i];
-  const select = ffById("voter" + i);
-  const voter = select ? select.value : "";
+    if (req.headers && req.headers["if-none-match"] === etag) return res.status(304).end();
 
-  if (voter === "") return alert("Choose which team you are voting as.");
-  if (tradeInfo(t).outcome !== "open") return alert("Voting on this trade is closed.");
-  if (t.votes[voter]) return alert("That team has already voted.");
+    const response = Object.assign({}, payload, {
+      state: result.state,
+      matched: matched.length,
+      returned: page.length,
+      offset: options.offset,
+      limit: options.limit || null,
+      summary: summarize(matched),
+      players: page
+    });
 
-  t.votes[voter] = decision;
+    if (result.state === "stale") response.stale = true;
 
-  ffLog(teams[voter].name + " voted to " + decision + " trade " + (i + 1),
-        "Trade " + (i + 1) + ": " + teams[voter].name + " voted " + decision);
+    return res.status(200).json(response);
+  } catch (error) {
+    log("error", "unhandled error in players handler", { message: error.message });
+    return res.status(500).json({
+      success: false,
+      message: "Unable to import NFL players right now.",
+      error: error.message
+    });
+  }
+};
 
-  renderTrades();
-  renderAudit();
-  renderDashboard();
-}
-
-function decideTrade(i, decision) {
-  const why = (prompt("Written reason for the tie-break (required, 10+ characters):") || "").trim();
-  if (why.length < 10) return alert("A written reason of at least 10 characters is required.");
-
-  trades[i].decision = decision;
-  trades[i].decisionNote = why;
-
-  ffLog("Commissioner broke the tie on trade " + (i + 1) + ": " + decision + ". Reason: " + why,
-        "Trade " + (i + 1) + ": commissioner " + decision + " after a tie");
-
-  renderTrades();
-  renderAudit();
-  renderDashboard();
-}
-
-function renderTrades() {
-  ffById("tradeList").innerHTML = trades.length
-    ? trades.map(function (t, i) {
-        const status = tradeStatusText(t);
-        const outcome = tradeInfo(t).outcome;
-
-        const options = teams.map(function (team, j) {
-          if (j === t.a || j === t.b) return "";
-          const voted = t.votes[j];
-          return '<option value="' + j + '"' + (voted ? " disabled" : "") + ">" +
-            ffEsc(team.name) + (voted ? " (voted)" : "") + "</option>";
-        }).join("");
-
-        const ballots = Object.keys(t.votes).map(function (j) {
-          return ffEsc(teams[j].name) + ": " + ffEsc(t.votes[j]);
-        }).join(" · ") || "No votes yet";
-
-        let controls = "";
-        if (outcome === "open") {
-          controls = '<div class="actions" style="margin-top:10px"><select id="voter' + i +
-            '" style="width:auto"><option value="">Vote as…</option>' + options + "</select>" +
-            '<button class="btn secondary" onclick="voteTrade(' + i + ",'approve')\">Approve</button>" +
-            '<button class="btn secondary" onclick="voteTrade(' + i + ",'reject')\">Reject</button></div>";
-        } else if (outcome === "tied") {
-          controls = '<div class="actions" style="margin-top:10px">' +
-            '<button class="btn secondary" onclick="decideTrade(' + i + ",'approved')\">Commissioner: approve</button>" +
-            '<button class="btn secondary" onclick="decideTrade(' + i + ",'rejected')\">Commissioner: reject</button></div>";
-        }
-
-        return '<div class="card" style="margin-bottom:10px"><div class="row"><b>' +
-          ffEsc(teams[t.a].name) + " ↔ " + ffEsc(teams[t.b].name) + '</b><span class="pill ' + status[1] + '">' +
-          ffEsc(status[0]) +
+// Exposed so the helpers can be unit-tested without starting a server.
+module.exports._internals = {
+  parseQuery: parseQuery,
+  filterPlayers: filterPlayers,
+  summarize: summarize,
+  normalizePosition: normalizePosition,
+  normalizeTeamCode: normalizeTeamCode,
+  isValidPlayer: isValidPlayer,
+  baseHandler: baseHandler
+};
